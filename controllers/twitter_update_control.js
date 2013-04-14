@@ -1,28 +1,41 @@
 module.exports = {
-    session: {},                    // link to active temboo session
-    model: {                        // holds app configuration and current state information
+	session: {}                    // link to active temboo session
+	, model: {                        // holds app configuration and current state information
 		"curClientId": 0
 		, "clients": {}
-    },
+		, "page" : {
+			"title": "Tweets in Space"
+			, "subtitle": "Send tweets through spacebrew"			
+			, "template": {
+				"no_auth": "twitter_update_no_auth"
+				, "auth": "twitter_update"
+			}
+		}
+		, "forwarding_url": "http://localhost:8002/tweet/auth?client_id="
+	}
+	, utils: require("./utils")
+	, oauth: require("./twitter_oauth")
 
-    /**
-     * init 	Method that initializes the controller object by getting a reference to the
-     * 			Temboo session object.
-     * @param  {Object} config  Configuration object that includes the auth settings 
-     *                          and the session object.
-     * @return {Object}         Twitter control object if config object was valid,
-     *                          otherwise it returns an empty object
-     */
-    init: function( config ) {
-        if (config["session"]) {
+	/**
+	 * Method that initializes the controller object by getting a reference to the
+	 *  Temboo session object.
+	 * @param  {Object} config  Configuration object that includes the auth settings 
+	 *                          and the session object.
+	 * @return {Object}         Twitter control object if config object was valid,
+	 *                          otherwise it returns an empty object
+	 */
+	, init: function( config ) {
+	    if (config["session"]) {
 	        this.session = config["session"];
+	        this.handleOAuthRequest = this.oauth.getHandleOAuthRequest( this );
+	        this.handleAppRequest = this.utils.getHandleAppRequest( this );
 	        console.log("[init:Twitter] successfully configured twitter status update controller")
 	        return this;
-        } else {
-            console.log("[init:Twitter] unable to configure twitter status update controller")
-            return {};        
-        }
-    },
+	    } else {
+	        console.log("[init:Twitter] unable to configure twitter status update controller")
+	        return {};        
+	    }
+	}
 
     /**
      * newClient 	Increments the curClientId and then add a new client to the this.model.clients object, 
@@ -30,7 +43,7 @@ module.exports = {
      * @param  {Object} config  	Configuration object with an application name
      * @return {this.model.Client}  Returns the client object that was just created
      */
-    newClient: function () {
+    , newClient: function () {
         this.model.curClientId++;               // update curClientId number
         var clientId = this.model.curClientId;  // assign id number for current client
         this.model.clients[clientId] = {        // initialize the current client object
@@ -53,126 +66,26 @@ module.exports = {
 			}
 		}
         return this.model.clients[clientId];
-    },
+    }
 
-    /**
-     * handleAppRequest 	Callback function that handles requests for the twitter app. These requests 
-     * 						are parsed to extract the app name from the URL. Once that is done, a new 
-     * 						client object is created and then the appropriate page template is rendered. 
-     * 						The client id, page title and subtitle are passed to the front-end page that is 
-     *       				being rendered.   
-     * @param  {Request Object} req 	Express server request object, which includes information about the 
-     *                          		HTTP request
-     * @param  {Response Object} res 	Express server response object, used to respond to the HTTP request
-     */
-    handleAppRequest: function (req, res) {
-        var urlReq = require('url').parse(req.url, true)    // get the full URL request
-        	, client = this.newClient()
-        	;
+	/**
+	 * Points to Oauth methods that handles http requests associated to OAuth athentication for the
+	 * 	twitter app. It leverages Temboo's OAuth API, in a consistent manner. Look at the 
+	 * 	twitter_oath.js file for more details. Method is initialized in init function.
+	 */
+	, handleOAuthRequest: function(req, res) { 
+		console.log ("[handleOAuthRequest] placeholder function is being called") 
+	}
 
-        // create the query string that will be appended to the redirect urls
-        if (urlReq.query['server']) client.query_str["server"] = urlReq.query['server'];       
-        if (urlReq.query['port']) client.query_str["port"] = urlReq.query['port'];        
-        if (urlReq.query['name']) client.query_str["name"] = urlReq.query['name'];
-        if (urlReq.query['description']) client.query_str["description"] = urlReq.query['description'];
-        if (urlReq.query['refresh']) client.query_str["refresh"] = urlReq.query['refresh'];
-        if (urlReq.query['debug']) client.query_str["debug"] = urlReq.query['debug'];
 
-        console.log("[handleAppRequest] new client id ", client.id)
-        console.log("[handleAppRequest] loaded query string settings ", this.model.clients[client.id].query_str)
-
-        res.render('twitter_update_no_auth',
-            { 
-                "title" : "Tweets in Space"           
-                , "subTitle" : "Send tweets through spacebrew"
-                , "clientId" : client.id
-                , "authConfirm" : false
-                , "queryStr" : client.query_str
-            }
-        )                                
-    },
-
-    /**
-     * handleOAuthRequest 	Method that handles http requests associated to OAuth athentication for the
-     * 						Foursquare app. It leverages Temboo's OAuth API, in a consistent manner.
-     * @param  {Request Object} req 	Express server request object, which includes information about 
-     *                          		the HTTP request
-     * @param  {Response Object} res 	Express server response object, used to respond to the HTTP request
-     */
-    handleOAuthRequest: function(req, res) {
-        var urlReq = require('url').parse(req.url, true)    // get the full URL request
-            , client_id = urlReq.query['client_id'] || -1
-            , client = this.model.clients[client_id]
-            , Twitter = require("temboo/Library/Twitter/OAuth")
-            , oauthChoreo = undefined
-            , oauthInputs = undefined
-            , self = this
-            ; 
-
-        console.log("[handleOAuthRequest]  client id ", client_id)
-        console.log("[handleOAuthRequest] current client's model: ", this.model.clients[client_id])
-
-        // handle first step of the OAuth authentication flow
-		if (!this.model.clients[client.id].auth.oath_started) {
-            console.log("[authTemboo] step 1 - client id ", client.id)
-
-			oauthChoreo = new Twitter.InitializeOAuth(self.session);
-
-			oauthInputs = oauthChoreo.newInputSet();
-			oauthInputs.setCredential('TwitterSpacebrewForwarder');
-			oauthInputs.set_ForwardingURL("http://localhost:8002/tweet/auth?client_id=" + client.id)
-
-			var intitializeOAuthCallback = function(results){
-			    	console.log("[intitializeOAuthCallback:handleOAuthRequest] initial OAuth successful ", results.get_AuthorizationURL());
-			    	self.model.clients[client_id].auth.auth_token_secret = results.get_OAuthTokenSecret();
-			    	self.model.clients[client_id].auth.callback_id = results.get_CallbackID();
-			    	self.model.clients[client.id].auth.oath_started = true;
-			    	res.redirect(results.get_AuthorizationURL());		    		
-			    }
-
-			oauthChoreo.execute(
-			    oauthInputs,
-			    intitializeOAuthCallback,
-			    function(error){console.log("start OAuth", error.type); console.log(error.message);}
-			);
-		}
-
-        // handle second step of the OAuth authentication flow
-		else {
-            console.log("[authTemboo] step 2 - client id ", client.id)
-
-		    oauthChoreo = new Twitter.FinalizeOAuth(self.session)
-
-			oauthInputs = oauthChoreo.newInputSet();
-			oauthInputs.setCredential('TwitterSpacebrewForwarder');
-			oauthInputs.set_CallbackID(self.model.clients[client_id].auth.callback_id);
-			oauthInputs.set_OAuthTokenSecret(self.model.clients[client_id].auth.auth_token_secret);
-
-			var finalizeOAuthCallback = function(results){
-		    	console.log("[finalizeOAuthCallback:handleOAuthRequest] finish OAuth successful");
-		    	self.model.clients[client_id].auth.access_token = results.get_AccessToken();
-		    	self.model.clients[client_id].auth.access_token_secret = results.get_AccessTokenSecret();
-
-	            client = self.model.clients[client_id];
-	            res.render('twitter_update',
-	                { 
-						"title" : "Tweets in Space"           
-						, "subTitle" : "forwarding tweets to spacebrew"
-						, "clientId" : client.id
-						, "authConfirm" : true
-						, "queryStr" : client.query_str
-	                }
-	            )                                            
-		    }
-
-			// Run the choreo, specifying success and error callback handlers
-			oauthChoreo.execute(
-			    oauthInputs,
-			    finalizeOAuthCallback,
-			    function(error){console.log("final OAuth", error.type); console.log(error.message);}
-			);
-		} 
-    },
+	/**
+	 * Points to callback function that handles requests for the twitter app. These requests 
+	 * 	are parsed to extract the app name from the URL. Look at the utils.js file for more 
+	 * 	details and to see the code for this method. Method is initialized in init function.  
+	 */
+	, handleAppRequest: function(req, res) { 
+		console.log ("[handleAppRequest] placeholder function is being called") 
+	}
 
     /**
      * Callback function that handles ajax requests for making tweets. The query string 
@@ -185,7 +98,7 @@ module.exports = {
      *                          		the HTTP request
      * @param  {Response Object} res 	Express server response object, used to respond to the HTTP request
      */
-    handleStatusUpdate: function (req, res) {
+    , handleStatusUpdate: function (req, res) {
         var urlReq = require('url').parse(req.url, true)    // get the full URL request
             , queryJson = JSON.parse(unescape(urlReq.search.replace(/\?/, "")))      // convert string to json (unescape to convert string format first)
             // , client                                       // will hold client object
@@ -227,7 +140,7 @@ module.exports = {
 
         // submit the query and client id to the query twitter app
         this.updateTemboo(queryJson.id, "reply");
-    },
+    }
 
     /**
      * Submits tweets to twitter via the Temboo API engine. 
@@ -235,7 +148,7 @@ module.exports = {
      * @param  {String} callbackName 	Name of callback method that should be called when results data
      *                                	is received. If none is proved then it will default to reply.
      */
-    updateTemboo: function (clientId, callbackName) {
+	, updateTemboo: function (clientId, callbackName) {
         var tweet = this.model.clients[clientId].updates[this.model.clients[clientId].updates.length-1]
             , callbackName = callbackName || "reply"
             , self = this
@@ -245,7 +158,7 @@ module.exports = {
             ;
 
         // abort search if query (held in searchT) is not a valid string
-        if (!this.isString(tweet)) {
+        if (!this.utils.isString(tweet)) {
 	        console.log("[updateTemboo] tweet not valid: ", tweet);
 	        return;    // return if search term not valid
 	    }
@@ -269,17 +182,24 @@ module.exports = {
          */
         var successCallback = function( results ) {
             var tResults = JSON.parse(results.get_Response())
-            	, vals = ""
+            	, results_list = []
             	;
 
-            // if the response includes one or more tweets then process it
+            // if the response includes the tweet that was sent then create an Object with it
             if (tResults.text) {
 				console.log( "[successCallback:updateTemboo] tweeted successfully: ", tResults.text );
-				if (self.model.clients[clientId][callbackName]) {
-					new_tweet = { "tweet" : tResults.text };
-					var reply_obj = { "list" : [new_tweet] , "state": "success"};
-					self.model.clients[clientId][callbackName](JSON.stringify(reply_obj));
-				}
+				newTweet = { 
+					"tweet" : tResults.text 
+				};
+			}
+
+			// add the results to an array object
+			results_list.push(newTweet)
+
+			// send the array under the attribute "list"
+			if (self.model.clients[clientId][callbackName]) {
+				var reply_obj = { "list" : results_list};
+				self.model.clients[clientId][callbackName](JSON.stringify(reply_obj));
 			}
 		};
 
@@ -289,14 +209,14 @@ module.exports = {
             successCallback,
             function(error) {console.log(error.type); console.log(error.message);}
         );
-    },
+    }
 
     /**
      * isString 	Check whether an object is a string
      * @param  {Object}  obj 	Object that will be checked to confirm whether it is a string
      * @return {Boolean}     	Returns true if the object was a string. False otherwise.
      */
-    isString: function (obj) {
+    , isString: function (obj) {
         return toString.call(obj) === '[object String]';
     }
 }

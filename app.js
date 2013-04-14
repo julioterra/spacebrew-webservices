@@ -2,7 +2,7 @@
 var express = require('express')
 	, stylus = require('stylus')
 	, nib = require('nib')
-	, appList = ['twitter', 'foursquare']
+	, appList = ['twitter', 'tweets', 'foursquare']
 	, tembooAuth = require("./auth/auth_temboo").tAuth
 	, tsession = require("temboo/core/temboosession")
 	, session = new tsession.TembooSession(tembooAuth.user, tembooAuth.app, tembooAuth.key)
@@ -12,7 +12,7 @@ var express = require('express')
 	, handleRoot = rootApp.handleRoot.bind(rootApp)
 
 	// twitter app handlers
-	, twitterApp = require('./controllers/twitter_control').init( {"session": session} )
+	, twitterApp = require('./controllers/twitter_forwarder_control').init( {"session": session} )
 	, handleTwitterApp = twitterApp.handleAppRequest.bind(twitterApp)
 	, handleTwitterAuth = twitterApp.handleOAuthRequest.bind(twitterApp)
 	, handleTwitterQuery = twitterApp.handleQueryRequest.bind(twitterApp)

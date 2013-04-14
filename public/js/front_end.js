@@ -687,10 +687,10 @@ View.Spacebrew = function (config) {
 			}
 		},
 
-		onCustom: function (inlet, msg) {
+		onCustom: function (inlet, type, msg) {
 			if (this.model.debug) console.log("[onCustom] got string msg: " + msg);
 			if (this.callbacks["onCustom"]) {
-				this.callbacks["onCustom"](inlet, msg, type);
+				this.callbacks["onCustom"](inlet, type, msg);
 			}
 		},
 

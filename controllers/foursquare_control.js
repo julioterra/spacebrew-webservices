@@ -1,9 +1,20 @@
 module.exports = {
-    session: {},                    // link to active temboo session
-    model: {                        // holds app configuration and current state information
+    session: {}                    // link to active temboo session
+    , model: {                        // holds app configuration and current state information
         "curClientId": 0
         , "clients": {}
-    },
+		, "page" : {
+			"title": "Foursquare in Space"
+			, "subtitle": "Forwarding check-ins to spacebrew"			
+			, "template": {
+				"no_auth": "foursquare_no_auth"
+				, "auth": "foursquare"
+			}
+		}
+		, "forwarding_url": "http://localhost:8002/tweet/auth?client_id="
+		// , "forwarding_url": "http://sandbox.spacebrew.cc:8002/foursquare/auth?client_id="
+    }
+    , utils: require("./utils.js")
 
     /**
      * init 	Method that initializes the controller object by getting a reference to the
@@ -13,16 +24,17 @@ module.exports = {
      * @return {Object}         Foursquare control object if config object was valid,
      *                          otherwise it returns an empty object.
      */
-    init: function( config ) {
+    , init: function( config ) {
         if (config["session"]) {
             this.session = config["session"];
+	        this.handleAppRequest = this.utils.getHandleAppRequest( this );
             console.log("[init:foursquareControl] successfully configured fourquare controller")
             return this;            
         } else {
             console.log("[init:foursquareControl] unable to configure fourquare controller")
             return {};        
         }
-    },
+    }
 
     /**
      * newClient 	Increments the curClientId and then add a new client to the this.model.clients 
@@ -30,7 +42,7 @@ module.exports = {
      * @param  {Object} config      Configuration object with an application name
      * @return {Object}             Returns the client object that was just created
      */
-    newClient: function (config) {
+    , newClient: function (config) {
         this.model.curClientId++;               // update curClientId number
         var clientId = this.model.curClientId;  // assign id number for current client
         this.model.clients[clientId] = {        // initialize the current client object
@@ -58,7 +70,16 @@ module.exports = {
 			}
         } 
         return this.model.clients[clientId];    // return reference to current client object
-    },
+    }
+
+	/**
+	 * Points to callback function that handles requests for the twitter app. These requests 
+	 * 	are parsed to extract the app name from the URL. Look at the utils.js file for more 
+	 * 	details and to see the code for this method. Method is initialized in init function.  
+	 */
+	, handleAppRequest: function(req, res) { 
+		console.log ("[handleAppRequest] placeholder function is being called") 
+	}
 
 	/**
      * handleAppRequest 	Callback function that handles requests for the foursquare app. These 
@@ -72,32 +93,31 @@ module.exports = {
      * @param  {Response Object} res 	Express server response object, used to respond to the 
      *                           		HTTP request
      */
-    handleAppRequest: function (req, res) {
-        var urlReq = require('url').parse(req.url, true)    // get the full URL request
-        	, client = this.newClient()
-        	;
+ //    , handleAppRequest: function (req, res) {
+ //        var urlReq = require('url').parse(req.url, true)    // get the full URL request
+ //        	, client = this.newClient()
+ //        	;
 
-        // create the query string that will be appended to the redirect urls
-        if (urlReq.query['server']) client.query_str["server"] = urlReq.query['server'];       
-        if (urlReq.query['port']) client.query_str["port"] = urlReq.query['port'];        
-        if (urlReq.query['name']) client.query_str["name"] = urlReq.query['name'];
-        if (urlReq.query['description']) client.query_str["description"] = urlReq.query['description'];
-        if (urlReq.query['refresh']) client.query_str["refresh"] = urlReq.query['refresh'];
-        if (urlReq.query['debug']) client.query_str["debug"] = urlReq.query['debug'];
+ //        // create the query string that will be appended to the redirect urls
+ //        if (urlReq.query['server']) client.query_str["server"] = urlReq.query['server'];       
+ //        if (urlReq.query['port']) client.query_str["port"] = urlReq.query['port'];        
+ //        if (urlReq.query['name']) client.query_str["name"] = urlReq.query['name'];
+ //        if (urlReq.query['description']) client.query_str["description"] = urlReq.query['description'];
+ //        if (urlReq.query['refresh']) client.query_str["refresh"] = urlReq.query['refresh'];
+ //        if (urlReq.query['debug']) client.query_str["debug"] = urlReq.query['debug'];
 
-        console.log("[handleAppRequest] loaded query string settings ", this.model.clients[client.id].query_str)
+ //        console.log("[handleAppRequest] loaded query string settings ", this.model.clients[client.id].query_str)
 
-        res.render('foursquare_no_auth',
-            { 
-                "title" : "Foursquare in Space"           
-                , "subTitle" : "forwarding check-ins to spacebrew"
-                , "clientId" : client.id
-                , "authConfirm" : false
-                , "queryStr" : client.query_str
-            }
-        )                                
-
-	},
+ //        res.render('foursquare_no_auth',
+ //            { 
+ //                "title" : "Foursquare in Space"           
+ //                , "subTitle" : "forwarding check-ins to spacebrew"
+ //                , "clientId" : client.id
+ //                , "authConfirm" : false
+ //                , "queryStr" : client.query_str
+ //            }
+ //        )                                
+	// }
 
     /**
      * handleOAuthRequest 	Method that handles http requests associated to OAuth athentication for the
@@ -105,7 +125,7 @@ module.exports = {
      * @param  {Request Object} req Express server request object, which includes information about the HTTP request
      * @param  {Response Object} res Express server response object, used to respond to the HTTP request
      */
-    handleOAuthRequest: function(req, res) {
+    , handleOAuthRequest: function(req, res) {
         var urlReq = require('url').parse(req.url, true)    // get the full URL request
             , client_id = urlReq.query['client_id'] || -1
             , client = this.model.clients[client_id]
@@ -125,8 +145,7 @@ module.exports = {
 
 			oauthInputs = oauthChoreo.newInputSet();
 			oauthInputs.setCredential('FoursquareSpacebrewForwarder');
-			oauthInputs.set_ForwardingURL("http://localhost:8002/foursquare/auth?client_id=" + client.id)
-			// oauthInputs.set_ForwardingURL("http://sandbox.spacebrew.cc:8002/foursquare/auth?client_id=" + client.id)
+			oauthInputs.set_ForwardingURL(this.model.forwarding_url + client.id)
 
 			var intitializeOAuthCallback = function(results){
 			    	console.log("[intitializeOAuthCallback:handleOAuthRequest] initial OAuth successful ", results.get_AuthorizeURL());
@@ -175,7 +194,7 @@ module.exports = {
 			    function(error){console.log("ERROR: final OAuth", error.type); console.log(error.message);}
 			);
 		} 
-    },
+    }
 
     /**
      * handleQueryRequest 		Callback function that handles ajax requests for new content. The query 
@@ -189,7 +208,7 @@ module.exports = {
      *                          		HTTP request
      * @param  {Response Object} res 	Express server response object, used to respond to the HTTP request
      */
-    handleQueryRequest: function (req, res) {
+    , handleQueryRequest: function (req, res) {
         var urlReq = require('url').parse(req.url, true)    // get the full URL request
             , queryJson = JSON.parse(unescape(urlReq.search.replace(/\?/, "")))       // convert string to json (unescape to convert string format first)
             , client                                        // will hold client object
@@ -224,7 +243,7 @@ module.exports = {
         }
 
         this.queryTemboo(queryJson.id, "reply");
-    },
+    }
 
     /**
      * queryTemboo Function that submits foursquare API requests via the Temboo API engine. 
@@ -232,10 +251,13 @@ module.exports = {
      * @param  {String}     callbackName    Name of callback method that should be called when results data
      *                                      is received. If none is proved then it will default to reply.
      */
-    queryTemboo: function (clientId, callbackName) {
+    , queryTemboo: function (clientId, callbackName) {
         var searchT = this.model.clients[clientId].query
             , geocodeT = this.model.clients[clientId].geo
             , callbackName = callbackName || "reply"
+            , foursquare = require("temboo/Library/Foursquare/Checkins")
+            , queryChoreo = new foursquare.RecentCheckins(this.session)
+            , queryInputs = queryChoreo.newInputSet()
             , self = this
             ;
 
@@ -243,14 +265,14 @@ module.exports = {
         console.log("[queryTemboo] geocode: ", geocodeT);
         console.log("[queryTemboo] auth token: ",this.model.clients[clientId].auth.access_token)
 
-        if (!this.isString(searchT)) return;    // return if search term not valid
+        if (!this.utils.isString(searchT)) return;    // return if search term not valid
 
         // set-up the temboo service connection
-        var Foursquare = require("temboo/Library/Foursquare/Checkins");
-        var queryChoreo = new Foursquare.RecentCheckins(this.session);
+        // var Foursquare = require("temboo/Library/Foursquare/Checkins");
+        // var queryChoreo = new foursquare.RecentCheckins(this.session);
+        // var queryInputs = queryChoreo.newInputSet();
         
         // Instantiate and populate the input set for the choreo
-        var queryInputs = queryChoreo.newInputSet();
         queryInputs.set_ResponseFormat("json");     // requesting response in json
         queryInputs.set_OauthToken(this.model.clients[clientId].auth.access_token);
         if (this.model.clients[clientId].geo.available) {
@@ -268,7 +290,7 @@ module.exports = {
          */
         var successCallback = function(results) {
             var tResults = JSON.parse(results.get_Response())
-                , checkIns = []
+                , results_list = []
                 , newCheckIn = {} 
                 ;
 
@@ -303,18 +325,17 @@ module.exports = {
                             console.log( "[successCallback:queryTemboo] new check-in created, index number: " + i, newCheckIn);
 
                             // add new checkin to checkIns array
-                            checkIns.push(newCheckIn);
+                            results_list.push(newCheckIn);
 
                             // update the id of the most recent message
                             self.model.clients[clientId].afterTimeStamp = self.model.clients[clientId].results[i].createdAt;
                         }
                     }
-
                 }
 
                 // call appropriate response methods for client that made request
                 if (self.model.clients[clientId][callbackName]) {
-                    var reply_obj = { "list" : checkIns };
+                    var reply_obj = { "list" : results_list };
                     console.log("\n[successCallback:queryTemboo] sending json response: ", JSON.stringify(reply_obj));
                     self.model.clients[clientId][callbackName](JSON.stringify(reply_obj));
                 }
@@ -327,14 +348,14 @@ module.exports = {
             successCallback,
             function(error) {console.log(error.type); console.log(error.message);}
         );
-    },
-
-    /**
-     * isString Function that checks whether an object is a string
-     * @param  {Object}  obj Object that will be checked to confirm whether it is a string
-     * @return {Boolean}     Returns true if the object was a string. False otherwise.
-     */
-    isString: function (obj) {
-        return toString.call(obj) === '[object String]';
     }
+
+	/**
+	 * isString Function that checks whether an object is a string
+	 * @param  {Object}  obj Object that will be checked to confirm whether it is a string
+	 * @return {Boolean}     Returns true if the object was a string. False otherwise.
+	 */
+	// isString: function (obj) {
+	//     return toString.call(obj) === '[object String]';
+	// }
 }
