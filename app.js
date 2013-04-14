@@ -29,6 +29,13 @@ var express = require('express')
 	, handleFoursquareAuth = foursquareApp.handleOAuthRequest.bind(foursquareApp)
 	, handleFoursquareQuery = foursquareApp.handleQueryRequest.bind(foursquareApp)
 
+	// twitter app handlers
+	, instagramApp = require('./controllers/instagram_forwarder').init( {"session": session} )
+	, handleInstagramApp = instagramApp.handleAppRequest.bind(instagramApp)
+	, handleInstagramAuth = instagramApp.handleOAuthRequest.bind(instagramApp)
+	, handleInstagramQuery = instagramApp.handleQueryRequest.bind(instagramApp)
+
+
 	, model = model || { httpPort: 8002 }
 
 	// create application
@@ -67,6 +74,13 @@ app.get('/', handleRoot);
 	app.get('/foursquare/auth', handleFoursquareAuth);
 	app.get('/foursquare/search', handleFoursquareQuery);
 	app.get('/foursquare/query', handleFoursquareQuery);
+
+	// twitter foursquare routes
+	app.get('/instagram', handleInstagramApp);
+	app.get('/instagram/auth', handleInstagramAuth);
+	app.get('/instagram/search', handleInstagramQuery);
+	app.get('/instagram/query', handleInstagramQuery);
+
 
 app.listen(model.httpPort)    
 

@@ -10,65 +10,25 @@ var app = {}
 			, "port": this.queryStr.port || 9000
 			, "name": this.queryStr.name || "twitter_forwarder"
 			, "description": unescape(this.queryStr.description) || "web app that forwards tweets to spacebrew"
-			, "pubs": [
-			    { 
-			    	"name": 'tweets', 	
-			    	"type": 'string' 
-			    }
-			    , { 
-			    	"name": 'users_tweets', 				
-			    	"type": 'string' 
-			    }
-			    , { 
-			    	"name": 'users_tweets_photos', 				
-			    	"type": 'string' 
-			    }
-			    , { 
-			    	"name": 'users_tweets_geo', 				
-			    	"type": 'string' 
-			    }
-			    , { 
-			    	"name": 'kitchen_sink', 				
-			    	"type": 'string' 
-			    }
-			    , { 
-			    	"name": 'new_tweets', 
-			    	"type": 'boolean' 
-			    }
-			]
-			, "subs": [
-			    { 
-			    	"name": 'query', 
-			    	"type": 'string' 
-			    } 
-			]
+			, "pubs": []
+			, "subs": []
 		}
-		, "input": {
-			"required": {
-				"query": {
-					"text": "string"
+		, "web": {
+			"input": {
+				"required": {
+					"query": {
+						"text": "string"
+					}
 				}
 			}
-			, "optional": {
-				"geo": {
-					"lat": "integer",
-					"long": "integer",
-					"radius": "integer"
-				}									
+			, "output": {
+				"post": {
+					"user": ""
+					, "photo": "img"
+				}
 			}
 		}
-		, "output": {
-			"tweets": {
-				"user": ""
-				, "text": ""
-				, "lat": ""
-				, "long": ""
-				, "created_at": ""
-				, "photo": "img"
-
-			}
-		}
-		, "query_path" : "/twitter/search"
+		, "query_path" : "/instagram/search"
 	};
 
 
@@ -144,7 +104,7 @@ $(window).bind("load", function() {
 
 	if (!authConfirm) {
 		$("#logIn").on("click", function(event) {
-			$(location).attr('href', ("/twitter/auth?client_id=" + clientId));
+			$(location).attr('href', ("/instagram/auth?client_id=" + clientId));
 		});
 		if (debug) console.log("[onload:window] registered logIn button")
 	} 
@@ -153,8 +113,8 @@ $(window).bind("load", function() {
 		app.model = new Model.Main(clientId, config);
 		app.web_view = new View.Web({"model": app.model});
 		app.sb_view = new View.Spacebrew({"model": app.model});
-		app.sb_view.addCallback("load", "sbLoadTweet", sb);
-		app.sb_view.addCallback("onString", "onString", sb);
+		// app.sb_view.addCallback("load", "sbLoadTweet", sb);
+		// app.sb_view.addCallback("onString", "onString", sb);
 		app.control = new Control.Main([app.web_view, app.sb_view], app.model);
 		if (debug) console.log("[onload:window] loaded model, controllers, and views")
 	}

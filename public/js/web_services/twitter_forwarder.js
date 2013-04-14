@@ -43,29 +43,30 @@ var app = {}
 			    } 
 			]
 		}
-		, "input": {
-			"required": {
-				"query": {
-					"text": "string"
+		, "web": {
+			"input": {
+				"required": {
+					"query": {
+						"text": "string"
+					}
+				}
+				, "optional": {
+					"geo": {
+						"lat": "integer",
+						"long": "integer",
+						"radius": "integer"
+					}									
 				}
 			}
-			, "optional": {
-				"geo": {
-					"lat": "integer",
-					"long": "integer",
-					"radius": "integer"
-				}									
-			}
-		}
-		, "output": {
-			"tweets": {
-				"user": ""
-				, "text": ""
-				, "lat": ""
-				, "long": ""
-				, "created_at": ""
-				, "photo": "img"
-
+			, "output": {
+				"tweets": {
+					"user": ""
+					, "text": ""
+					, "lat": ""
+					, "long": ""
+					, "created_at": ""
+					, "photo": "img"
+				}
 			}
 		}
 		, "query_path" : "/twitter/search"

@@ -215,7 +215,7 @@ module.exports = {
         var successCallback = function(results) {
             var tResults = JSON.parse(results.get_Response()),
                 results_list = [],
-                newTweet = {},
+                newTweet = {}
                 ;
 
             // console.log( "[successCallback:queryTemboo] query results reply: ", tResults );
@@ -259,7 +259,7 @@ module.exports = {
                 }
 
                 // call appropriate response methods for client that made request
-                console.log("[successCallback:queryTemboo] new tweets: ", newTweets);
+                console.log("[successCallback:queryTemboo] new tweets: ", results_list);
                 if (self.model.clients[clientId][callbackName]) {
                     var reply_obj = {"list" : results_list, "query": self.model.clients[clientId].query };
                     self.model.clients[clientId][callbackName](JSON.stringify(reply_obj));

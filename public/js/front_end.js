@@ -22,11 +22,11 @@ var Model = {};
 		this.type = config.type;
 
 		// set-up the input state variables
-		for (var type in this.config.input) {
+		for (var type in this.config.web.input) {
 			this.data.input[type] = {};	
-			for (var group in this.config.input[type]) {
+			for (var group in this.config.web.input[type]) {
 				this.data.input[type][group] = {};	
-				for (var entry in this.config.input[type][group]) {
+				for (var entry in this.config.web.input[type][group]) {
 					this.data.input[type][group][entry] = "";			
 				}
 				this.data.input[type][group].available = false;
@@ -34,7 +34,7 @@ var Model = {};
 		}
 
 		// set-up the output state variables
-		for (var type in this.config.output) {
+		for (var type in this.config.web.output) {
 			this.data.output[type] = {};	
 			this.data.output[type].list = [];
 			this.data.output[type].latest = 0;
@@ -213,16 +213,16 @@ var Control = {};
 				if (this.model.debug) console.log("[Control:submit] this.model.data.input: ", this.model.data.input );
 
 				// loop through each input type (required and optional) and group 				
-				for (var type in this.model.config.input) {
+				for (var type in this.model.config.web.input) {
 					if (query[type]) {
-						for (var group in this.model.config.input[type]) {
+						for (var group in this.model.config.web.input[type]) {
 							var data_available = true;
 
 							if (query[type][group]) {
 								// loop through each input field within the current group
-								for (var attr in this.model.config.input[type][group]) {
+								for (var attr in this.model.config.web.input[type][group]) {
 									// make sure that the input string has an appropriate value, using regex
-									var data_type = this.model.config.input[type][group][attr];
+									var data_type = this.model.config.web.input[type][group][attr];
 									if (query[type][group][attr]) {
 										match_results = query[type][group][attr].match(new_regexes[data_type]);
 
@@ -398,14 +398,14 @@ View.Web = function (config) {
 				, htmlSettings;
 
 			// create the submission form as defined in the configuration object
-			for (var type in this.model.config.input) {
+			for (var type in this.model.config.web.input) {
 
 				// create the wrapper for different input types (required and optional)
 				htmlSettings = { id: type, title: (type + ' query fields.') };
 				$typeDiv = $('<div/>', htmlSettings).appendTo('#query_form');
 
 				// loop through each input group of current input type
-				for (var attr in this.model.config.input[type]) {
+				for (var attr in this.model.config.web.input[type]) {
 
 					// create new div object for the current input group 
 					htmlSettings = { class: type, id: attr, title: (type + ' query fields.') };
@@ -416,7 +416,7 @@ View.Web = function (config) {
 					$('<h2/>', htmlSettings).appendTo($groupDiv);
 
 					// loop through input group elements to creat text boxes
-					for (var sub_attr in this.model.config.input[type][attr]) {
+					for (var sub_attr in this.model.config.web.input[type][attr]) {
 						htmlSettings = { class: 'textBox', type: "text", value: sub_attr, id: sub_attr + "_textBox" };
 						$('<input/>', htmlSettings).appendTo($groupDiv);
 					}							
@@ -441,20 +441,20 @@ View.Web = function (config) {
 				, divSettings;
 
 			// create a template for the data as configured in object
-			for (var type in this.model.config.output) {
+			for (var type in this.model.config.web.output) {
 
 				// create the wrapper for each template type
 				divSettings = { class: type + " content_elements" };
 				$typeDiv = $('<div/>', divSettings).appendTo('#templates');
 
 				// loop through each element of the current template
-				for (var attr in this.model.config.output[type]) {
+				for (var attr in this.model.config.web.output[type]) {
 
 					// create new span for each element 
 					divSettings = { class: attr + " content_element_attr"};
 					$groupDiv = $('<div/>', divSettings);
 
-					if (this.model.config.output[type][attr] == "img") {
+					if (this.model.config.web.output[type][attr] == "img") {
 						$img = $('<img/>', {class: attr })
 						$img.appendTo($groupDiv);
 					}
@@ -491,12 +491,12 @@ View.Web = function (config) {
 			console.log("[Web:load] this.model.data ", this.model.data);
 			// if (this.model.debug) console.log("[Web:load] this.model.data ", this.model.data);
 
-			for (var type in this.model.config.input) {
+			for (var type in this.model.config.web.input) {
 				if (this.model.debug) console.log("[Web:load] this model data ", type);
 
-				for (var cur in this.model.config.input[type]) {
+				for (var cur in this.model.config.web.input[type]) {
 					query_str += "::" + cur + " - ";
-					for (var ele in this.model.config.input[type][cur]) {
+					for (var ele in this.model.config.web.input[type][cur]) {
 						if (this.model.debug) console.log("[Web:load] HERE ", this.model.data.input[type][cur]);
 						if (this.model.data.input[type][cur].available && ele !== "available") {
 							query_str += " " + ele + ": " + this.model.data.input[type][cur][ele];
@@ -522,7 +522,7 @@ View.Web = function (config) {
 						var cur_val = this.model.data.output[type].list[element][attr];
 						if (cur_val !== "not available") {
 							console.log("this.model.config ", this.model.config);
-							if (this.model.config.output[type][attr] == "img") {
+							if (this.model.config.web.output[type][attr] == "img") {
 								$newEle.find("img." + attr).attr("src", cur_val);							
 							}
 							else {
@@ -569,11 +569,11 @@ View.Web = function (config) {
 			// for update and forwarding apps submit the data
 			if (this.controller["submit"]) {
 				// loop through each input to read each one				
-				for (var type in this.model.config.input) {
+				for (var type in this.model.config.web.input) {
 					msg[type] = {};
-					for (var group in this.model.config.input[type]) {
+					for (var group in this.model.config.web.input[type]) {
 						msg[type][group] = {};
-						for (var attr in this.model.config.input[type][group]) {
+						for (var attr in this.model.config.web.input[type][group]) {
 							msg[attr] = $("#" + attr + "_textBox").val();
 							msg[type][group][attr] = $("#" + attr + "_textBox").val();
 						}

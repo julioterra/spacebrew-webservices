@@ -1,20 +1,19 @@
 module.exports = {
-    session: {}                    // link to active temboo session
-    , model: {                        // holds app configuration and current state information
+    session: {}         		// link to active temboo session
+    , utils: require("./utils.js")
+    , model: {           		// holds app configuration and current state information
         "curClientId": 0
         , "clients": {}
 		, "page" : {
-			"title": "Foursquare in Space"
-			, "subtitle": "Forwarding check-ins to spacebrew"			
+			"title": "Instagram in Space"
+			, "subtitle": "Forwarding instagram photos to spacebrew"			
 			, "template": {
-				"no_auth": "foursquare_no_auth"
-				, "auth": "foursquare"
+				"no_auth": "instagram_forwarder_no_auth"
+				, "auth": "instagram_forwarder"
 			}
 		}
-		, "forwarding_url": "http://localhost:8002/foursquare/auth?client_id="
-		// , "forwarding_url": "http://sandbox.spacebrew.cc:8002/foursquare/auth?client_id="
+		, "forwarding_url": "http://localhost:8002/instagram/auth?client_id="
     }
-    , utils: require("./utils.js")
 
     /**
      * init 	Method that initializes the controller object by getting a reference to the
@@ -49,14 +48,9 @@ module.exports = {
 			"id": clientId
 			, "query": ""
 			, "results": {}
-			, "afterTimeStamp": 0
+			, "lastId": 0
 			, "reply": undefined
-			, "geo": {
-				"lat": 0
-				, "long": 0
-				, "available": false
-			},
-			"auth": {
+			, "auth": {
 				"code": ""
 				, "access_token": ""
 				, "oath_started": false
@@ -64,16 +58,18 @@ module.exports = {
 			, "query_str": {
 				"server": "sandbox.spacebrew.cc"
 				, "port": 9000
-				, "name": "spacebrew foursquare"
-				, "description": "web app that forwards foursquare check-ins to spacebrew"
+				, "name": "instagram_forwarder"
+				, "description": "web app that forwards instagram pictures to spacebrew"
 				, "refresh": undefined
 			}
         } 
+        console.log("[newClient] new client created ", this.model.clients[clientId])
+        console.log("[newClient] model ", this.model)
         return this.model.clients[clientId];    // return reference to current client object
     }
 
 	/**
-	 * Points to callback function that handles requests for the twitter app. These requests 
+	 * Points to callback function that handles requests for the instagram app. These requests 
 	 * 	are parsed to extract the app name from the URL. Look at the utils.js file for more 
 	 * 	details and to see the code for this method. Method is initialized in init function.  
 	 */
@@ -83,7 +79,7 @@ module.exports = {
 
     /**
      * handleOAuthRequest 	Method that handles http requests associated to OAuth athentication for the
-     * 						Foursquare app. It leverages Temboo's OAuth API, in a consistent manner.
+     * 						instagram app. It leverages Temboo's OAuth API, in a consistent manner.
      * @param  {Request Object} req Express server request object, which includes information about the HTTP request
      * @param  {Response Object} res Express server response object, used to respond to the HTTP request
      */
@@ -91,29 +87,29 @@ module.exports = {
         var urlReq = require('url').parse(req.url, true)    // get the full URL request
             , client_id = urlReq.query['client_id'] || -1
             , client = this.model.clients[client_id]
-            , Foursquare = require("temboo/Library/Foursquare/OAuth")
-            , oauthChoreo = undefined
-            , oauthInputs = undefined
+            , instagram = require("temboo/Library/Instagram/OAuth")
+            , oauthChoreo = new instagram.InitializeOAuth(this.session)
+            , oauthInputs = oauthChoreo.newInputSet()
             , self = this
             ; 
+
+        console.log("[handleOAuthRequest] model clients: ", this.model.clients)
 
         console.log("[handleOAuthRequest] current client's model: ", this.model.clients[client_id])
 
         // handle first step of the OAuth authentication flow
 		if (!this.model.clients[client.id].auth.oath_started) {
+
             console.log("[handleOAuthRequest] step 1 - client id ", client.id)
 
-			oauthChoreo = new Foursquare.InitializeOAuth(self.session);
-
-			oauthInputs = oauthChoreo.newInputSet();
-			oauthInputs.setCredential('FoursquareSpacebrewForwarder');
+			oauthInputs.setCredential('InstagramSpacebrewForwarder');
 			oauthInputs.set_ForwardingURL(this.model.forwarding_url + client.id)
 
 			var intitializeOAuthCallback = function(results){
-			    	console.log("[intitializeOAuthCallback:handleOAuthRequest] initial OAuth successful ", results.get_AuthorizeURL());
+			    	console.log("[intitializeOAuthCallback:handleOAuthRequest] initial OAuth successful ", results.get_AuthorizationURL());
 			    	self.model.clients[client_id].auth.callback_id = results.get_CallbackID();
 			    	self.model.clients[client.id].auth.oath_started = true;
-			    	res.redirect(results.get_AuthorizeURL());		
+			    	res.redirect(results.get_AuthorizationURL());		
 			    }
 
 			oauthChoreo.execute(
@@ -127,10 +123,10 @@ module.exports = {
 		else {
             console.log("[handleOAuthRequest] step 2 - client id ", client.id)
 
-		    oauthChoreo = new Foursquare.FinalizeOAuth(self.session)
+		    oauthChoreo = new instagram.FinalizeOAuth(self.session)
 
 			oauthInputs = oauthChoreo.newInputSet();
-			oauthInputs.setCredential('FoursquareSpacebrewForwarder');
+			oauthInputs.setCredential('InstagramSpacebrewForwarder');
 			oauthInputs.set_CallbackID(self.model.clients[client_id].auth.callback_id);
 
 			var finalizeOAuthCallback = function(results){
@@ -180,22 +176,14 @@ module.exports = {
 
         // if no client id is provided, or client id is invalid, then send user back to unauthorized page
         if (!queryJson.id || !this.model.clients[queryJson.id]) {
-            res.redirect( "/foursquare"); 
+            res.redirect( "/instagram"); 
         } 
 
-        // if geo filter data is available, then store it in the appropriate client
-        if (queryJson.data.optional.geo) {
-            // if any of the geo filter attributes have changed then update the client object 
-            if ((queryJson.data.optional.geo.lat != this.model.clients[queryJson.id].geo.lat) || 
-                (queryJson.data.optional.geo.long != this.model.clients[queryJson.id].geo.long) ||
-                (queryJson.data.optional.geo.available != this.model.clients[queryJson.id].geo.available)) 
-            {
-                console.log("[handleQueryRequest] geocode included : ", queryJson.geo);        
-                this.model.clients[queryJson.id].geo.lat = queryJson.data.optional.geo.lat;
-                this.model.clients[queryJson.id].geo.long = queryJson.data.optional.geo.long;
-                this.model.clients[queryJson.id].geo.available = queryJson.data.optional.geo.available;                
-                this.model.clients[queryJson.id].afterTimeStamp = 0;     // reset last ID to 0
-            }
+        // check if this query differs from the current one, if so then re-initialize the lastId, and query vars
+        if ((this.model.clients[queryJson.id].query !== queryJson.data.required.query.text)) {
+            console.log("[handleQueryRequest] Query is new");        
+            this.model.clients[queryJson.id].lastId = 0;
+            this.model.clients[queryJson.id].query = queryJson.data.required.query.text;
         }
 
         // // set the ajax_req flag to true and create the callback function
@@ -214,35 +202,23 @@ module.exports = {
      *                                      is received. If none is proved then it will default to reply.
      */
     , queryTemboo: function (clientId, callbackName) {
-        var searchT = this.model.clients[clientId].query
-            , geocodeT = this.model.clients[clientId].geo
+        var query = this.model.clients[clientId].query
             , callbackName = callbackName || "reply"
-            , foursquare = require("temboo/Library/Foursquare/Checkins")
-            , queryChoreo = new foursquare.RecentCheckins(this.session)
+            , instagram = require("temboo/Library/Instagram")
+            , queryChoreo = new instagram.RecentlyTaggedMedia(this.session)
             , queryInputs = queryChoreo.newInputSet()
             , self = this
             ;
 
-        console.log("[queryTemboo] new request made: ", searchT);
-        console.log("[queryTemboo] geocode: ", geocodeT);
+        console.log("[queryTemboo] new request made: ", query);
         console.log("[queryTemboo] auth token: ",this.model.clients[clientId].auth.access_token)
 
-        if (!this.utils.isString(searchT)) return;    // return if search term not valid
+        if (!this.utils.isString(query)) return;    // return if search term not valid
 
-        // set-up the temboo service connection
-        // var Foursquare = require("temboo/Library/Foursquare/Checkins");
-        // var queryChoreo = new foursquare.RecentCheckins(this.session);
-        // var queryInputs = queryChoreo.newInputSet();
-        
         // Instantiate and populate the input set for the choreo
-        queryInputs.set_ResponseFormat("json");     // requesting response in json
-        queryInputs.set_OauthToken(this.model.clients[clientId].auth.access_token);
-        if (this.model.clients[clientId].geo.available) {
-            console.log("[queryTemboo] geo code data available: ");
-            queryInputs.set_Latitude(this.model.clients[clientId].geo.lat);     // requesting response in json
-            queryInputs.set_Longitude(this.model.clients[clientId].geo.long);     // requesting response in json            
-        }
-        queryInputs.set_AfterTimeStamp(this.model.clients[clientId].createdAt);
+		queryInputs.set_MinID(self.model.clients[clientId].lastId);
+		queryInputs.set_AccessToken(this.model.clients[clientId].auth.access_token);
+		queryInputs.set_TagName(query);
 
         /**
          * successCallback Method that is called by the temboo API when the results from twitter are
@@ -250,49 +226,39 @@ module.exports = {
          *     data back to the front end
          * @param  {Temboo Results Obect} results Results from Temboo Foursquare service query
          */
-        var successCallback = function(results) {
+        var successCallback = function( results ) {
             var tResults = JSON.parse(results.get_Response())
                 , results_list = []
-                , newCheckIn = {} 
+                , result_item = {} 
                 ;
 
             // console.log( "[successCallback] results received - string: ", results.get_Response() );
             console.log( "[successCallback:queryTemboo] results received - json: ", tResults );
 
             // check if results received by verifying that tResults object contains a response.recent attribute
-            if (tResults["response"]) {
-                if (tResults.response["recent"]) {
+            if (tResults["data"]) {
 
-                    // store the results in the appropriate client
-                    self.model.clients[clientId].results = tResults.response["recent"];
+				// store the results in the appropriate client
+				self.model.clients[clientId].results = tResults.data;
+	            console.log( "[successCallback:queryTemboo] here are the results: ", tResults.data );
 
-                    // loop through each check-in to parse and store the data
-                    for(var i = tResults.response["recent"].length - 1; i >= 0; i--) {
-                        // if this is a new check in then process it
-                        if (self.model.clients[clientId].results[i].createdAt > self.model.clients[clientId].afterTimeStamp) {
-                            newCheckIn = {
-                                "user": tResults.response["recent"][i].user.firstName + " " + tResults.response["recent"][i].user.lastName,
-                                "photo": tResults.response["recent"][i].user.photo,
-                                "venue": tResults.response["recent"][i].venue.name,
-                                "address": tResults.response["recent"][i].venue.location.address,
-                                "lat": tResults.response["recent"][i].venue.location.lat,
-                                "long": tResults.response["recent"][i].venue.location.lng,
-                                "city": tResults.response["recent"][i].venue.location.city,
-                                "state": tResults.response["recent"][i].venue.location.state,
-                                "country": tResults.response["recent"][i].venue.location.country,
-                                "checkinsCount": tResults.response["recent"][i].venue.stats.checkinsCount,
-                                "createdAt": tResults.response["recent"][i].createdAt,
-                                "id": tResults.response["recent"][i].createdAt,
-                            };
-                            console.log( "[successCallback:queryTemboo] new check-in created, index number: " + i, newCheckIn);
+				// loop through each check-in to parse and store the data
+				for(var i = tResults.data.length - 1; i >= 0; i--) {
+				    // if this is a new check in then process it
+					result_item = {
+					    // "user": tResults.response["recent"][i].username
+					    // , "photo": tResults.response["recent"][i].user.photo,
+					};
+					console.log( "[successCallback:queryTemboo] new check-in created, index number: " + i, result_item);
 
-                            // add new checkin to checkIns array
-                            results_list.push(newCheckIn);
+					// add new checkin to checkIns array
+					results_list.push(result_item);
 
-                            // update the id of the most recent message
-                            self.model.clients[clientId].afterTimeStamp = self.model.clients[clientId].results[i].createdAt;
-                        }
-                    }
+					// update the id of the most recent message
+					if (self.model.clients[clientId].lastId < self.model.clients[clientId].results[i].id) {
+						self.model.clients[clientId].lastId = self.model.clients[clientId].results[i].id;
+						console.log("[successCallback] id of last message received ", self.model.clients[clientId].lastId)
+					}
                 }
 
                 // call appropriate response methods for client that made request
@@ -311,13 +277,4 @@ module.exports = {
             function(error) {console.log(error.type); console.log(error.message);}
         );
     }
-
-	/**
-	 * isString Function that checks whether an object is a string
-	 * @param  {Object}  obj Object that will be checked to confirm whether it is a string
-	 * @return {Boolean}     Returns true if the object was a string. False otherwise.
-	 */
-	// isString: function (obj) {
-	//     return toString.call(obj) === '[object String]';
-	// }
 }

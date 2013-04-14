@@ -39,32 +39,34 @@ var app = {}
 			, "subs": [
 			]
 		}
-		, "input": {
-			"required": {
-				"my friends": {}
+		, "web" : {
+			"input": {
+				"required": {
+					"my friends": {}
+				}
+				, "optional": {
+					"geo": {
+						"lat": "integer",
+						"long": "integer",
+					}									
+				}
 			}
-			, "optional": {
-				"geo": {
-					"lat": "integer",
-					"long": "integer",
-				}									
-			}
-		}
-		, "output": {
-			"check-ins": {
-				"address": "",
-				"checkinsCount": "",
-				"city": "",
-				"country": "",
-				"createdAt": "",
-				"id": "",
-				"lat": "",
-				"long": "",
-				"photo": "img",
-				"state": "",
-				"user": "",
-				"venue": ""
-			}
+			, "output": {
+				"check-ins": {
+					"address": "",
+					"checkinsCount": "",
+					"city": "",
+					"country": "",
+					"createdAt": "",
+					"id": "",
+					"lat": "",
+					"long": "",
+					"photo": "img",
+					"state": "",
+					"user": "",
+					"venue": ""
+				}
+			}			
 		}
 		, "query_path" : "/foursquare/search"
 	};

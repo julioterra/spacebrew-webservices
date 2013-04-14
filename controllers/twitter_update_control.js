@@ -1,5 +1,7 @@
 module.exports = {
 	session: {}                    // link to active temboo session
+	, utils: require("./utils")
+	, oauth: require("./twitter_oauth")
 	, model: {                        // holds app configuration and current state information
 		"curClientId": 0
 		, "clients": {}
@@ -13,8 +15,6 @@ module.exports = {
 		}
 		, "forwarding_url": "http://localhost:8002/tweet/auth?client_id="
 	}
-	, utils: require("./utils")
-	, oauth: require("./twitter_oauth")
 
 	/**
 	 * Method that initializes the controller object by getting a reference to the
@@ -123,14 +123,13 @@ module.exports = {
 			}
 		}
 
+		// update this section to prepare data to make request and save it in model object 
 		update = queryJson.data.required.tweet.update;
 		if (update > 140) {
 			update = update.substring(0, 140);
 		}
-		console.log("[handleQueryRequest] update text ", queryJson.data.required.tweet);
-		console.log("[handleQueryRequest] update text ", update);
-
         this.model.clients[queryJson.id].updates.push(update);
+		console.log("[handleQueryRequest] update text ", update);
 
         // create the callback function to respond to request once data has been received from twitter
         this.model.clients[queryJson.id].reply = function(data) {
