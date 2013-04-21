@@ -2,7 +2,7 @@
 var express = require('express')
 	, stylus = require('stylus')
 	, nib = require('nib')
-	, appList = ['twitter', 'tweets', 'foursquare']
+	, appList = ['twitter', 'tweets', 'foursquare', 'instagram']
 	, tembooAuth = require("./auth/auth_temboo").tAuth
 	, tsession = require("temboo/core/temboosession")
 	, config = {

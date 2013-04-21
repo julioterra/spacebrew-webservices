@@ -14,7 +14,7 @@ module.exports = {
     handleRoot: function (req, res) {
       res.write('live services:\n');
       for (var i in this.model.services) {
-          res.write('\t/' + this.model.services[i]);
+          res.write('\n/' + this.model.services[i]);
       }
       res.end();
     }
