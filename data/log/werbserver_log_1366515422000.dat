@@ -1,0 +1,4 @@
+[init:Twitter] successfully configured twitter forwarder controller
+[init:Twitter] successfully configured twitter status update controller
+[init:foursquareControl] successfully configured fourquare controller
+[init:foursquareControl] successfully configured fourquare controller

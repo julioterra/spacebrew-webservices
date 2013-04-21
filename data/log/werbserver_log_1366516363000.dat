@@ -1,0 +1,24 @@
+[handleAppRequest] loaded query string settings  { server: 'sandbox.spacebrew.cc',
+  port: 9000,
+  name: 'instagram_forwarder',
+  description: 'web app that forwards instagram pictures to spacebrew',
+  refresh: undefined }
+[90mGET /instagram/ [32m200 [90m86ms - 1.14kb[0m
+[90mGET /js/web_services/instagram_forwarder.js [36m304 [90m3ms[0m
+[90mGET /js/front_end.js [36m304 [90m4ms[0m
+[90mGET /js/libs/sb-1.0.3.js [36m304 [90m5ms[0m
+[90mGET /js/libs/jq.1.8.3.js [36m304 [90m5ms[0m
+[90mGET /stylesheets/style.css [32m200 [90m253ms - 2.76kb[0m
+[90mGET /instagram/auth?client_id=1 [36m302 [90m1778ms - 482[0m
+[90mGET /instagram/auth?client_id=1 [36m302 [90m1094ms - 154[0m
+[handleAuthenticatedRequest] loading an authenticated request page for  1
+[90mGET /instagram/ready?client_id=1 [32m200 [90m15ms - 993[0m
+[90mGET /js/web_services/instagram_forwarder.js [36m304 [90m4ms[0m
+[90mGET /js/front_end.js [36m304 [90m4ms[0m
+[90mGET /js/libs/sb-1.0.3.js [36m304 [90m2ms[0m
+[90mGET /js/libs/jq.1.8.3.js [36m304 [90m3ms[0m
+[90mGET /stylesheets/style.css [36m304 [90m9ms[0m
+[90mGET /instagram/search?%7B%22id%22%3A1%2C%22data%22%3A%7B%22required%22%3A%7B%22query%22%3A%7B%22text%22%3A%22text%22%2C%22available%22%3Atrue%7D%7D%7D%7D [32m200 [90m710ms[0m
+[90mGET /instagram/search?%7B%22id%22%3A1%2C%22data%22%3A%7B%22required%22%3A%7B%22query%22%3A%7B%22text%22%3A%22tribeca%22%2C%22available%22%3Atrue%7D%7D%7D%7D [32m200 [90m932ms[0m
+[90mGET /instagram/search?%7B%22id%22%3A1%2C%22data%22%3A%7B%22required%22%3A%7B%22query%22%3A%7B%22text%22%3A%22tribeca%22%2C%22available%22%3Atrue%7D%7D%7D%7D [32m200 [90m1267ms[0m
+[90mGET /instagram/search?%7B%22id%22%3A1%2C%22data%22%3A%7B%22required%22%3A%7B%22query%22%3A%7B%22text%22%3A%22tribeca%22%2C%22available%22%3Atrue%7D%7D%7D%7D [32m200 [90m1659ms[0m

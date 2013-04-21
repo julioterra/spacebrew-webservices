@@ -1,27 +1,4 @@
 module.exports = {
-	session: {}
-	, model: {}
-
-	/**
-	 * Method that initializes the controller object by getting a reference to the
-	 *  Temboo session object.
-	 * @param  {Object} config  Configuration object that includes the auth settings 
-	 *                          and the session object.
-	 * @return {Object}         Twitter control object if config object was valid,
-	 *                          otherwise it returns an empty object
-	 */
-	, init: function( config ) {
-		if (config["session"]) {
-			this.session = config["session"];
-			this.model = config["model"];
-			console.log("[init:Twitter] successfully initiated twitter oath ");
-			return this;
-		} else {
-			console.log("[init:Twitter] unable to initiate twitter oath");
-			return {};        
-		}
-	}
-
 
 	/**
 	 * handleOAuthRequest 	Method that handles http requests associated to OAuth athentication for the
@@ -30,7 +7,7 @@ module.exports = {
 	 *                          		the HTTP request
 	 * @param  {Response Object} res 	Express server response object, used to respond to the HTTP request
 	 */
-	, getHandleOAuthRequest: function( controller ) {
+	getHandleOAuthRequest: function( controller ) {
 
 		var handleOAuthRequest = function(req, res) {
 			var urlReq = require('url').parse(req.url, true)    // get the full URL request
@@ -42,12 +19,12 @@ module.exports = {
 				// , self = this
 				; 
 
-			console.log("[handleOAuthRequest]  client id ", client_id)
-			console.log("[handleOAuthRequest] current client's model: ", controller.model.clients[client_id])
+			if (controller.debug) console.log("[handleOAuthRequest]  client id ", client_id)
+			if (controller.debug) console.log("[handleOAuthRequest] current client's model: ", controller.model.clients[client_id])
 
 		    // handle first step of the OAuth authentication flow
 			if (!controller.model.clients[client.id].auth.oath_started) {
-				console.log("[authTemboo] step 1 - client id ", client.id)
+				if (controller.debug) console.log("[authTemboo] step 1 - client id ", client.id)
 
 				oauthChoreo = new Twitter.InitializeOAuth(controller.session);
 
@@ -56,7 +33,7 @@ module.exports = {
 				oauthInputs.set_ForwardingURL(controller.model.base_url + controller.model.forwarding_path + client.id)
 
 				var intitializeOAuthCallback = function(results){
-					console.log("[intitializeOAuthCallback:handleOAuthRequest] initial OAuth successful ", results.get_AuthorizationURL());
+					if (controller.debug) console.log("[intitializeOAuthCallback:handleOAuthRequest] initial OAuth successful ", results.get_AuthorizationURL());
 					controller.model.clients[client_id].auth.auth_token_secret = results.get_OAuthTokenSecret();
 					controller.model.clients[client_id].auth.callback_id = results.get_CallbackID();
 					controller.model.clients[client.id].auth.oath_started = true;
@@ -66,13 +43,16 @@ module.exports = {
 				oauthChoreo.execute(
 					oauthInputs,
 					intitializeOAuthCallback,
-					function(error){console.log("start OAuth", error.type); console.log(error.message);}
+					function(error){
+						console.log("start OAuth", error.type); 
+						console.log(error.message);
+					}
 				);
 			}
 
 		    // handle second step of the OAuth authentication flow
 			else {
-				console.log("[authTemboo] step 2 - client id ", client.id)
+				if (controller.debug) console.log("[authTemboo] step 2 - client id ", client.id)
 
 				oauthChoreo = new Twitter.FinalizeOAuth(controller.session)
 
@@ -82,7 +62,7 @@ module.exports = {
 				oauthInputs.set_OAuthTokenSecret(controller.model.clients[client_id].auth.auth_token_secret);
 
 				var finalizeOAuthCallback = function(results){
-					console.log("[finalizeOAuthCallback:handleOAuthRequest] finish OAuth successful");
+					if (controller.debug) console.log("[finalizeOAuthCallback:handleOAuthRequest] finish OAuth successful");
 					controller.model.clients[client_id].auth.access_token = results.get_AccessToken();
 					controller.model.clients[client_id].auth.access_token_secret = results.get_AccessTokenSecret();
 			    	res.redirect(controller.model.base_url + controller.model.authenticated_path + client_id);
@@ -92,7 +72,10 @@ module.exports = {
 				oauthChoreo.execute(
 					oauthInputs,
 					finalizeOAuthCallback,
-					function(error){console.log("final OAuth", error.type); console.log(error.message);}
+					function(error){
+						console.log("final OAuth", error.type); 
+						console.log(error.message);
+					}
 				);
 			} 
 		}

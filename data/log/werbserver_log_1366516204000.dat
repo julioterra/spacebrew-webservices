@@ -1,0 +1,12 @@
+[handleAppRequest] loaded query string settings  { server: 'sandbox.spacebrew.cc',
+  port: 9000,
+  name: 'instagram_forwarder',
+  description: 'web app that forwards instagram pictures to spacebrew',
+  refresh: undefined }
+[90mGET /instagram [32m200 [90m111ms - 1.14kb[0m
+[90mGET /js/web_services/instagram_forwarder.js [32m200 [90m12ms - 4.35kb[0m
+[90mGET /js/front_end.js [32m200 [90m11ms - 26.62kb[0m
+[90mGET /js/libs/sb-1.0.3.js [32m200 [90m11ms - 11.85kb[0m
+[90mGET /js/libs/jq.1.8.3.js [32m200 [90m307ms - 91.44kb[0m
+[90mGET /stylesheets/style.css [32m200 [90m329ms - 2.76kb[0m
+[90mGET /instagram/auth?client_id=1 [31m500 [90m39ms - 1.65kb[0m

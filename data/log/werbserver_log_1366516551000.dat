@@ -1,0 +1,69 @@
+[handleAppRequest] loaded query string settings  { server: 'sandbox.spacebrew.cc',
+  port: 9000,
+  name: 'instagram_forwarder',
+  description: 'web app that forwards instagram pictures to spacebrew',
+  refresh: undefined }
+[90mGET /instagram/ [36m304 [90m75ms[0m
+[90mGET /js/web_services/instagram_forwarder.js [36m304 [90m4ms[0m
+[90mGET /js/libs/sb-1.0.3.js [36m304 [90m4ms[0m
+[90mGET /js/libs/jq.1.8.3.js [36m304 [90m3ms[0m
+[90mGET /js/front_end.js [36m304 [90m2ms[0m
+[90mGET /stylesheets/style.css [32m200 [90m269ms - 2.76kb[0m
+[90mGET /instagram/auth?client_id=1 [36m302 [90m1421ms - 482[0m
+[90mGET /instagram/auth?client_id=1 [36m302 [90m1009ms - 154[0m
+[handleAuthenticatedRequest] loading an authenticated request page for  1
+[90mGET /instagram/ready?client_id=1 [32m200 [90m11ms - 993[0m
+[90mGET /js/libs/sb-1.0.3.js [36m304 [90m4ms[0m
+[90mGET /js/libs/jq.1.8.3.js [36m304 [90m1ms[0m
+[90mGET /stylesheets/style.css [36m304 [90m7ms[0m
+[90mGET /js/web_services/instagram_forwarder.js [36m304 [90m1ms[0m
+[90mGET /js/front_end.js [36m304 [90m0ms[0m
+[90mGET /instagram/search?%7B%22id%22%3A1%2C%22data%22%3A%7B%22required%22%3A%7B%22query%22%3A%7B%22text%22%3A%22text%22%2C%22available%22%3Atrue%7D%7D%7D%7D [32m200 [90m1146ms[0m
+[90mGET /instagram/search?%7B%22id%22%3A1%2C%22data%22%3A%7B%22required%22%3A%7B%22query%22%3A%7B%22text%22%3A%22text%22%2C%22available%22%3Atrue%7D%7D%7D%7D [32m200 [90m1250ms[0m
+[90mGET /instagram/search?%7B%22id%22%3A1%2C%22data%22%3A%7B%22required%22%3A%7B%22query%22%3A%7B%22text%22%3A%22text%22%2C%22available%22%3Atrue%7D%7D%7D%7D [32m200 [90m1409ms[0m
+[90mGET /instagram/search?%7B%22id%22%3A1%2C%22data%22%3A%7B%22required%22%3A%7B%22query%22%3A%7B%22text%22%3A%22text%22%2C%22available%22%3Atrue%7D%7D%7D%7D [32m200 [90m1130ms[0m
+[handleAppRequest] loaded query string settings  { server: 'sandbox.spacebrew.cc',
+  port: 9000,
+  name: 'space tweets',
+  description: 'forwards tweets to spacebrew',
+  refresh: undefined }
+[90mGET /twitter [36m304 [90m32ms[0m
+[90mGET /js/libs/sb-1.0.3.js [32m200 [90m4ms - 11.85kb[0m
+[90mGET /js/libs/jq.1.8.3.js [32m200 [90m5ms - 91.44kb[0m
+[90mGET /stylesheets/style.css [32m200 [90m10ms - 2.76kb[0m
+[90mGET /js/web_services/twitter_forwarder.js [32m200 [90m7ms - 4.39kb[0m
+[90mGET /js/front_end.js [32m200 [90m7ms - 26.62kb[0m
+[90mGET /favicon.ico [33m404 [90m5ms[0m
+[90mGET /twitter/auth?client_id=1 [36m302 [90m2556ms - 444[0m
+[90mGET /twitter/auth?client_id=1 [36m302 [90m706ms - 150[0m
+[handleAuthenticatedRequest] loading an authenticated request page for  1
+[90mGET /twitter/ready?client_id=1 [32m200 [90m14ms - 994[0m
+[90mGET /js/web_services/twitter_forwarder.js [36m304 [90m9ms[0m
+[90mGET /js/front_end.js [36m304 [90m10ms[0m
+[90mGET /js/libs/sb-1.0.3.js [36m304 [90m11ms[0m
+[90mGET /js/libs/jq.1.8.3.js [36m304 [90m14ms[0m
+[90mGET /stylesheets/style.css [36m304 [90m241ms[0m
+[90mGET /favicon.ico [33m404 [90m1ms[0m
+[90mGET /twitter/search?%7B%22id%22%3A1%2C%22data%22%3A%7B%22required%22%3A%7B%22query%22%3A%7B%22text%22%3A%22text%22%2C%22available%22%3Atrue%7D%7D%2C%22optional%22%3A%7B%22geo%22%3A%7B%22lat%22%3A%22%22%2C%22long%22%3A%22%22%2C%22radius%22%3A%22%22%2C%22available%22%3Afalse%7D%7D%7D%7D [32m200 [90m1421ms[0m
+[handleAppRequest] loaded query string settings  { server: 'sandbox.spacebrew.cc',
+  port: 9000,
+  name: 'space tweets',
+  description: 'forwards tweets to spacebrew',
+  refresh: undefined }
+[90mGET /twitter/ [32m200 [90m11ms - 1.1kb[0m
+[90mGET /stylesheets/style.css [36m304 [90m8ms[0m
+[90mGET /js/web_services/twitter_forwarder.js [32m200 [90m10ms - 4.39kb[0m
+[90mGET /js/libs/jq.1.8.3.js [36m304 [90m20ms[0m
+[90mGET /js/libs/sb-1.0.3.js [36m304 [90m22ms[0m
+[90mGET /js/front_end.js [32m200 [90m38ms - 26.62kb[0m
+[90mGET /twitter/auth?client_id=2 [36m302 [90m922ms - 444[0m
+[90mGET /twitter/auth?client_id=2 [36m302 [90m922ms - 150[0m
+[handleAuthenticatedRequest] loading an authenticated request page for  2
+[90mGET /twitter/ready?client_id=2 [32m200 [90m9ms - 994[0m
+[90mGET /stylesheets/style.css [36m304 [90m5ms[0m
+[90mGET /js/front_end.js [36m304 [90m7ms[0m
+[90mGET /js/libs/sb-1.0.3.js [36m304 [90m7ms[0m
+[90mGET /js/libs/jq.1.8.3.js [36m304 [90m7ms[0m
+[90mGET /js/web_services/twitter_forwarder.js [36m304 [90m8ms[0m
+[90mGET /twitter/search?%7B%22id%22%3A2%2C%22data%22%3A%7B%22required%22%3A%7B%22query%22%3A%7B%22text%22%3A%22text%22%2C%22available%22%3Atrue%7D%7D%2C%22optional%22%3A%7B%22geo%22%3A%7B%22lat%22%3A%22%22%2C%22long%22%3A%22%22%2C%22radius%22%3A%22%22%2C%22available%22%3Afalse%7D%7D%7D%7D [32m200 [90m1143ms[0m
+[90mGET /instagram/search?%7B%22id%22%3A1%2C%22data%22%3A%7B%22required%22%3A%7B%22query%22%3A%7B%22text%22%3A%22text%22%2C%22available%22%3Atrue%7D%7D%7D%7D [32m200 [90m1002ms[0m

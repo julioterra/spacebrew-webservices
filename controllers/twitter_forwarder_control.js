@@ -33,10 +33,10 @@ module.exports = {
 	        this.handleOAuthRequest = this.oauth.getHandleOAuthRequest( this );
 	        this.handleAppRequest = this.utils.getHandleAppRequest( this );
 	        this.handleAuthenticatedRequest = this.utils.getHandleAuthenticatedRequest( this );
-			console.log("[init:Twitter] successfully configured twitter forwarder controller")
+			if (this.debug) console.log("[init:Twitter] successfully configured twitter forwarder controller")
 		    return this;
 		} else {
-		    console.log("[init:Twitter] unable to configure twitter forwarder controller")
+		    if (this.debug) console.log("[init:Twitter] unable to configure twitter forwarder controller")
 		    return {};        
 		}
 	}
@@ -87,7 +87,7 @@ module.exports = {
 	 * 	twitter_oath.js file for more details
 	 */
 	, handleOAuthRequest: function(req, res) { 
-		console.log ("[twitter:handleOAuthRequest] placeholder function is being called") 
+		if (this.debug) console.log ("[twitter:handleOAuthRequest] placeholder function is being called") 
 	}
 
 	/**
@@ -96,7 +96,7 @@ module.exports = {
 	 * 	details and to see the code for this method. Method is initialized in init function.  
 	 */
 	, handleAppRequest: function(req, res) { 
-		console.log ("[twitter:handleAppRequest] placeholder function is being called") 
+		if (this.debug) console.log ("[twitter:handleAppRequest] placeholder function is being called") 
 	}
 
 	/**
@@ -105,7 +105,7 @@ module.exports = {
 	 * 	confirm authentication.  
 	 */
 	, handleAuthenticatedRequest: function(req, res) { 
-		console.log ("[handleAuthenticatedRequest] placeholder function is being called"); 
+		if (this.debug) console.log ("[handleAuthenticatedRequest] placeholder function is being called"); 
 	}
 
     /**
@@ -124,9 +124,10 @@ module.exports = {
         var urlReq = require('url').parse(req.url, true)    // get the full URL request
             , queryJson = JSON.parse(unescape(urlReq.search.replace(/\?/, "")))      // convert string to json (unescape to convert string format first)
             , client                                       // will hold client object
+            , self = this
             ;
 
-        console.log("[handleQueryRequest] json query ", queryJson)
+        if (this.debug) console.log("[handleQueryRequest] json query ", queryJson)
 
         // if no client id is provided, or client id is invalid, then send user back to unauthorized page
         if (!queryJson.id || !this.model.clients[queryJson.id]) {
@@ -137,7 +138,7 @@ module.exports = {
         if (queryJson.data.required) {
 			for (var attr in queryJson.data.required) {
 				if (!queryJson.data.required[attr].available) {
-					console.log("[handleQueryRequest] required attribute " + queryJson.data.required[attr] + " not available");
+					if (this.debug) console.log("[handleQueryRequest] required attribute " + queryJson.data.required[attr] + " not available");
 					return;
 				}
 			}
@@ -145,7 +146,7 @@ module.exports = {
 
         // check if this query differs from the current one, if so then re-initialize the lastestId, and query vars
         if ((this.model.clients[queryJson.id].query !== queryJson.data.required.query.text)) {
-            console.log("[handleQueryRequest] Query is new");        
+            if (this.debug) console.log("[handleQueryRequest] Query is new");        
             this.model.clients[queryJson.id].lastestId = 0;
             this.model.clients[queryJson.id].query = queryJson.data.required.query.text;
         }
@@ -158,7 +159,7 @@ module.exports = {
                 (queryJson.data.optional.geo.radius != this.model.clients[queryJson.id].geo.radius) ||
                 (queryJson.data.optional.geo.available != this.model.clients[queryJson.id].geo.available)) 
             {
-                console.log("[handleQueryRequest] Geocode included : ", queryJson.data.optional.geo);        
+                if (this.debug) console.log("[handleQueryRequest] Geocode included : ", queryJson.data.optional.geo);        
                 this.model.clients[queryJson.id].geo.lat = queryJson.data.optional.geo.lat;
                 this.model.clients[queryJson.id].geo.long = queryJson.data.optional.geo.long;
                 this.model.clients[queryJson.id].geo.radius = queryJson.data.optional.geo.radius;
@@ -169,7 +170,7 @@ module.exports = {
 
         // create the callback function to respond to request once data has been received from twitter
         this.model.clients[queryJson.id].reply = function(data) {
-            console.log("[handleQueryRequest] callback method: ", data);
+            if (self.debug) console.log("[handleQueryRequest] callback method: ", data);
             res.end(data);                
         }
 
@@ -194,8 +195,7 @@ module.exports = {
 			, queryInputs = queryChoreo.newInputSet()
             ;
 
-        console.log("[queryTemboo] new request made: ", searchT);
-        // console.log("[queryTemboo] geocode: ", geocodeT);
+        if (this.debug) console.log("[queryTemboo] new request made: ", searchT);
 
         // abort search if query (held in searchT) is not a valid string
         if (!this.utils.isString(searchT)) return;    // return if search term not valid
@@ -216,7 +216,7 @@ module.exports = {
                             + "," + this.model.clients[clientId].geo.long 
                             + "," + this.model.clients[clientId].geo.radius + "mi";
             queryInputs.set_Geocode(geocodeString);             // setting the search query
-            console.log("[queryTemboo] geocode string: ", geocodeString);
+            if (this.debug) console.log("[queryTemboo] geocode string: ", geocodeString);
         }
 
         /**
@@ -231,11 +231,8 @@ module.exports = {
                 newTweet = {}
                 ;
 
-            // console.log( "[successCallback:queryTemboo] query results reply: ", tResults );
-
             // if the response includes one or more tweets then process it
             if (tResults.statuses.length > 0) {
-                // console.log( "[successCallback:queryTemboo] response data array: ", tResults.statuses );
 
                 // save results in the model
                 self.model.clients[clientId].results = tResults.statuses;
@@ -268,15 +265,13 @@ module.exports = {
                         results_list.push(newTweet);
 
                         // update the id of the most recent message
-                        // if (self.model.clients[clientId].lastestId < self.model.clients[clientId].results[i].id) {
 						self.model.clients[clientId].lastestId = self.model.clients[clientId].results[i].id;
-						console.log("[successCallback] id of last message received ", self.model.clients[clientId].lastestId)                        	
-                        // }
+						if (self.debug) console.log("[successCallback] id of last message received ", self.model.clients[clientId].lastestId)                        	
                     }
                 }
 
                 // call appropriate response methods for client that made request
-                console.log("[successCallback:queryTemboo] new tweets: ", results_list);
+                if (self.debug) console.log("[successCallback:queryTemboo] new tweets: ", results_list);
                 if (self.model.clients[clientId][callbackName]) {
                     var reply_obj = {"list" : results_list, "query": self.model.clients[clientId].query };
                     self.model.clients[clientId][callbackName](JSON.stringify(reply_obj));
@@ -288,7 +283,10 @@ module.exports = {
         queryChoreo.execute(
             queryInputs,
             successCallback,
-            function(error) {console.log(error.type); console.log(error.message);}
+            function(error) {
+            	console.log(error.type); 
+            	console.log(error.message);
+            }
         );
     }
 }

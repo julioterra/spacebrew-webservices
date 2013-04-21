@@ -30,13 +30,14 @@ module.exports = {
 	    if (config["session"]) {
 	        this.session = config["session"];
             this.model.base_url = config["base_url"];
+            this.debug = config["debug"] || false;
 	        this.handleOAuthRequest = this.oauth.getHandleOAuthRequest( this );
 	        this.handleAppRequest = this.utils.getHandleAppRequest( this );
 	        this.handleAuthenticatedRequest = this.utils.getHandleAuthenticatedRequest( this );
-	        console.log("[init:Twitter] successfully configured twitter status update controller")
+	        if (this.debug) console.log("[init:Twitter] successfully configured twitter status update controller")
 	        return this;
 	    } else {
-	        console.log("[init:Twitter] unable to configure twitter status update controller")
+	        if (this.debug) console.log("[init:Twitter] unable to configure twitter status update controller")
 	        return {};        
 	    }
 	}
@@ -78,7 +79,7 @@ module.exports = {
 	 * 	twitter_oath.js file for more details. Method is initialized in init function.
 	 */
 	, handleOAuthRequest: function(req, res) { 
-		console.log ("[handleOAuthRequest] placeholder function is being called") 
+		if (this.debug) console.log ("[handleOAuthRequest] placeholder function is being called") 
 	}
 
 
@@ -88,7 +89,7 @@ module.exports = {
 	 * 	details and to see the code for this method. Method is initialized in init function.  
 	 */
 	, handleAppRequest: function(req, res) { 
-		console.log ("[handleAppRequest] placeholder function is being called") 
+		if (this.debug) console.log ("[handleAppRequest] placeholder function is being called") 
 	}
 
 	/**
@@ -97,7 +98,7 @@ module.exports = {
 	 * 	confirm authentication.  
 	 */
 	, handleAuthenticatedRequest: function(req, res) { 
-		console.log ("[handleAuthenticatedRequest] placeholder function is being called"); 
+		if (this.debug) console.log ("[handleAuthenticatedRequest] placeholder function is being called"); 
 	}
 
     /**
@@ -119,7 +120,7 @@ module.exports = {
             ;
 
 
-        console.log("[handleStatusUpdate] json update ", queryJson)
+        if (this.debug) console.log("[handleStatusUpdate] json update ", queryJson)
 
         // if no client id is provided, or client id is invalid, then send user back to unauthorized page
         if (!queryJson.id || !this.model.clients[queryJson.id]) {
@@ -130,7 +131,7 @@ module.exports = {
         if (queryJson.data.required) {
 			for (var attr in queryJson.data.required) {
 				if (!queryJson.data.required[attr].available) {
-					console.log("[handleQueryRequest] required attribute " + queryJson.data.required[attr] + " not available");
+					if (this.debug) console.log("[handleQueryRequest] required attribute " + queryJson.data.required[attr] + " not available");
 					return;
 				}
 			}
@@ -142,7 +143,7 @@ module.exports = {
 			update = update.substring(0, 140);
 		}
         this.model.clients[queryJson.id].updates.push(update);
-		console.log("[handleQueryRequest] update text ", update);
+		if (this.debug) console.log("[handleQueryRequest] update text ", update);
 
         // create the callback function to respond to request once data has been received from twitter
         this.model.clients[queryJson.id].reply = function(data) {
@@ -171,11 +172,11 @@ module.exports = {
 
         // abort search if query (held in searchT) is not a valid string
         if (!this.utils.isString(tweet)) {
-	        console.log("[updateTemboo] tweet not valid: ", tweet);
+	        if (this.debug) console.log("[updateTemboo] tweet not valid: ", tweet);
 	        return;    // return if search term not valid
 	    }
 
-        console.log("[updateTemboo] new to be made made: ", tweet);
+        if (this.debug) console.log("[updateTemboo] new to be made made: ", tweet);
 
         // prepare the query by adding authentication elements
 		queryInputs.setCredential("TwitterSpacebrewForwarderConsumerKeySecret");
@@ -199,7 +200,7 @@ module.exports = {
 
             // if the response includes the tweet that was sent then create an Object with it
             if (tResults.text) {
-				console.log( "[successCallback:updateTemboo] tweeted successfully: ", tResults.text );
+				if (this.debug) console.log( "[successCallback:updateTemboo] tweeted successfully: ", tResults.text );
 				newTweet = { 
 					"tweet" : tResults.text 
 				};
@@ -219,7 +220,10 @@ module.exports = {
         queryChoreo.execute(
             queryInputs,
             successCallback,
-            function(error) {console.log(error.type); console.log(error.message);}
+            function(error) {
+            	console.log(error.type); 
+            	console.log(error.message);
+            }
         );
     }
 

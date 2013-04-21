@@ -92,10 +92,7 @@ app.get('/', handleRoot);
 	app.get('/instagram/search', handleInstagramQuery);
 	app.get('/instagram/query', handleInstagramQuery);
 
-
-
 app.listen(model.httpPort)    
-
 
 /**
  * compileStylus Compiles the stylus library to use nib. These are the libraries that handle the stylesheet

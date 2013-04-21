@@ -29,12 +29,13 @@ module.exports = {
         if (config["session"]) {
             this.session = config["session"];
             this.model.base_url = config["base_url"];
+            this.debug = config["debug"] || false;
 	        this.handleAppRequest = this.utils.getHandleAppRequest( this );
 	        this.handleAuthenticatedRequest = this.utils.getHandleAuthenticatedRequest( this );
-            console.log("[init:foursquareControl] successfully configured fourquare controller")
+            if (this.debug) console.log("[init:foursquareControl] successfully configured fourquare controller")
             return this;            
         } else {
-            console.log("[init:foursquareControl] unable to configure fourquare controller")
+            if (this.debug) console.log("[init:foursquareControl] unable to configure fourquare controller")
             return {};        
         }
     }
@@ -81,7 +82,7 @@ module.exports = {
 	 * 	details and to see the code for this method. Method is initialized in init function.  
 	 */
 	, handleAppRequest: function(req, res) { 
-		console.log ("[handleAppRequest] placeholder function is being called") 
+		if (this.debug) console.log ("[handleAppRequest] placeholder function is being called") 
 	}
 
 	/**
@@ -90,7 +91,7 @@ module.exports = {
 	 * 	confirm authentication.  
 	 */
 	, handleAuthenticatedRequest: function(req, res) { 
-		console.log ("[handleAuthenticatedRequest] placeholder function is being called"); 
+		if (this.debug) console.log ("[handleAuthenticatedRequest] placeholder function is being called"); 
 	}
 
     /**
@@ -109,11 +110,11 @@ module.exports = {
             , self = this
             ; 
 
-        console.log("[handleOAuthRequest] current client's model: ", this.model.clients[client_id])
+        if (this.debug) console.log("[handleOAuthRequest] current client's model: ", this.model.clients[client_id])
 
         // handle first step of the OAuth authentication flow
 		if (!this.model.clients[client.id].auth.oath_started) {
-            console.log("[handleOAuthRequest] step 1 - client id ", client.id)
+            if (this.debug) console.log("[handleOAuthRequest] step 1 - client id ", client.id)
 
 			oauthChoreo = new Foursquare.InitializeOAuth(self.session);
 
@@ -122,7 +123,7 @@ module.exports = {
 			oauthInputs.set_ForwardingURL(this.model.base_url + this.model.forwarding_path + client.id)
 
 			var intitializeOAuthCallback = function(results){
-			    	console.log("[intitializeOAuthCallback:handleOAuthRequest] initial OAuth successful ", results.get_AuthorizeURL());
+			    	if (self.debug) console.log("[intitializeOAuthCallback:handleOAuthRequest] initial OAuth successful ", results.get_AuthorizeURL());
 			    	self.model.clients[client_id].auth.callback_id = results.get_CallbackID();
 			    	self.model.clients[client.id].auth.oath_started = true;
 			    	res.redirect(results.get_AuthorizeURL());		
@@ -131,13 +132,16 @@ module.exports = {
 			oauthChoreo.execute(
 			    oauthInputs,
 			    intitializeOAuthCallback,
-			    function(error){console.log("ERROR: start OAuth", error.type); console.log(error.message);}
+			    function(error){
+			    	console.log("ERROR: start OAuth", error.type); 
+			    	console.log(error.message);
+			    }
 			);
 		}
 
         // handle second step of the OAuth authentication flow
 		else {
-            console.log("[handleOAuthRequest] step 2 - client id ", client.id)
+            if (this.debug) console.log("[handleOAuthRequest] step 2 - client id ", client.id)
 
 		    oauthChoreo = new Foursquare.FinalizeOAuth(self.session)
 
@@ -146,7 +150,7 @@ module.exports = {
 			oauthInputs.set_CallbackID(self.model.clients[client_id].auth.callback_id);
 
 			var finalizeOAuthCallback = function(results){
-		    	console.log("[finalizeOAuthCallback:handleOAuthRequest] finish OAuth successful");
+		    	if (self.debug) console.log("[finalizeOAuthCallback:handleOAuthRequest] finish OAuth successful");
 		    	self.model.clients[client_id].auth.access_token = results.get_AccessToken();
 		    	res.redirect(self.model.base_url + self.model.authenticated_path + client_id);
 		    }
@@ -155,7 +159,10 @@ module.exports = {
 			oauthChoreo.execute(
 			    oauthInputs,
 			    finalizeOAuthCallback,
-			    function(error){console.log("ERROR: final OAuth", error.type); console.log(error.message);}
+			    function(error){
+			    	console.log("ERROR: final OAuth", error.type); 
+			    	console.log(error.message);
+			    }
 			);
 		} 
     }
@@ -176,9 +183,10 @@ module.exports = {
         var urlReq = require('url').parse(req.url, true)    // get the full URL request
             , queryJson = JSON.parse(unescape(urlReq.search.replace(/\?/, "")))       // convert string to json (unescape to convert string format first)
             , client                                        // will hold client object
+            , self = this
             ;
 
-        console.log("[handleQueryRequest] query string in json: ", queryJson)
+        if (this.debug) console.log("[handleQueryRequest] query string in json: ", queryJson)
 
         // if no client id is provided, or client id is invalid, then send user back to unauthorized page
         if (!queryJson.id || !this.model.clients[queryJson.id]) {
@@ -192,7 +200,7 @@ module.exports = {
                 (queryJson.data.optional.geo.long != this.model.clients[queryJson.id].geo.long) ||
                 (queryJson.data.optional.geo.available != this.model.clients[queryJson.id].geo.available)) 
             {
-                console.log("[handleQueryRequest] geocode included : ", queryJson.geo);        
+                if (this.debug) console.log("[handleQueryRequest] geocode included : ", queryJson.geo);        
                 this.model.clients[queryJson.id].geo.lat = queryJson.data.optional.geo.lat;
                 this.model.clients[queryJson.id].geo.long = queryJson.data.optional.geo.long;
                 this.model.clients[queryJson.id].geo.available = queryJson.data.optional.geo.available;                
@@ -202,7 +210,7 @@ module.exports = {
 
         // // set the ajax_req flag to true and create the callback function
         this.model.clients[queryJson.id].reply = function(data) {
-            console.log("[reply:handleQueryRequest] callback method, rendering data: ", data);
+            if (self.debug) console.log("[reply:handleQueryRequest] callback method, rendering data: ", data);
             res.end(data);                
         }
 
@@ -225,9 +233,9 @@ module.exports = {
             , self = this
             ;
 
-        console.log("[queryTemboo] new request made: ", searchT);
-        console.log("[queryTemboo] geocode: ", geocodeT);
-        console.log("[queryTemboo] auth token: ",this.model.clients[clientId].auth.access_token)
+        if (this.debug) console.log("[queryTemboo] new request made: ", searchT);
+        if (this.debug) console.log("[queryTemboo] geocode: ", geocodeT);
+        if (this.debug) console.log("[queryTemboo] auth token: ",this.model.clients[clientId].auth.access_token)
 
         if (!this.utils.isString(searchT)) return;    // return if search term not valid
 
@@ -240,7 +248,7 @@ module.exports = {
         queryInputs.set_ResponseFormat("json");     // requesting response in json
         queryInputs.set_OauthToken(this.model.clients[clientId].auth.access_token);
         if (this.model.clients[clientId].geo.available) {
-            console.log("[queryTemboo] geo code data available: ");
+            if (this.debug) console.log("[queryTemboo] geo code data available: ");
             queryInputs.set_Latitude(this.model.clients[clientId].geo.lat);     // requesting response in json
             queryInputs.set_Longitude(this.model.clients[clientId].geo.long);     // requesting response in json            
         }
@@ -258,8 +266,7 @@ module.exports = {
                 , newCheckIn = {} 
                 ;
 
-            // console.log( "[successCallback] results received - string: ", results.get_Response() );
-            console.log( "[successCallback:queryTemboo] results received - json: ", tResults );
+            if (this.debug) console.log( "[successCallback:queryTemboo] results received - json: ", tResults );
 
             // check if results received by verifying that tResults object contains a response.recent attribute
             if (tResults["response"]) {
@@ -290,7 +297,8 @@ module.exports = {
                                 "createdAt": tResults.response["recent"][i].createdAt,
                                 "id": tResults.response["recent"][i].createdAt,
                             };
-                            console.log( "[successCallback:queryTemboo] new check-in created, index number: " + i, newCheckIn);
+
+                            if (self.debug) console.log( "[successCallback:queryTemboo] new check-in created, index number: " + i, newCheckIn);
 
                             // add new checkin to checkIns array
                             results_list.push(newCheckIn);
@@ -304,7 +312,7 @@ module.exports = {
                 // call appropriate response methods for client that made request
                 if (self.model.clients[clientId][callbackName]) {
                     var reply_obj = { "list" : results_list };
-                    console.log("\n[successCallback:queryTemboo] sending json response: ", JSON.stringify(reply_obj));
+                    if (self.debug) console.log("\n[successCallback:queryTemboo] sending json response: ", JSON.stringify(reply_obj));
                     self.model.clients[clientId][callbackName](JSON.stringify(reply_obj));
                 }
             }
@@ -314,7 +322,10 @@ module.exports = {
         queryChoreo.execute(
             queryInputs,
             successCallback,
-            function(error) {console.log(error.type); console.log(error.message);}
+            function(error) {
+            	console.log(error.type); 
+            	console.log(error.message);
+            }
         );
     }
 
