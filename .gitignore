@@ -4,4 +4,5 @@ auth/credentials/*
 node_modules/*
 temboo_auth.js
 
-data/log/*
+*.log
+.DS_Store

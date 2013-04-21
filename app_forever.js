@@ -8,7 +8,7 @@ var server = new (forever.Monitor)('app.js', {
 	, 'options': argv.splice(2, argv.length)
 	, 'uid': 'spacebrew_webservices_server'
 	, 'pid': './data/'
-	, 'outFile': './data/log/webservice_server_log_' + date + '.dat'
+	, 'outFile': './data/log/webservice_server_log_' + date + '.log'
 });
 
 server.on('exit', function () {
