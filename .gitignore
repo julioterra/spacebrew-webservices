@@ -3,3 +3,6 @@ auth/credentials*
 auth/credentials/*
 node_modules/*
 temboo_auth.js
+
+data/*
+webserver_log*
