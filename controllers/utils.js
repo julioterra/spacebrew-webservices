@@ -32,6 +32,35 @@ module.exports = {
     }
 
 	/**
+	 * Points to callback function that handles authenticated requests for the instagram app. 
+	 * 	These requests need to include the client_id that is matched with an ip address to 
+	 * 	confirm authentication.  
+	 */
+	, getHandleAuthenticatedRequest: function ( controller ) {
+		return handleAuthenticatedRequest = function(req, res) { 
+			var urlReq = require('url').parse(req.url, true)    // get the full URL request
+				, client_id = urlReq.query['client_id'] || -1
+				, client = this.model.clients[client_id] 
+				;
+
+			if (client) {
+				console.log ("[handleAuthenticatedRequest] loading an authenticated request page for ", client_id); 
+				client.lastestId = 0;	
+
+				res.render(this.model.page.template.auth,
+					{ 
+						"title" : this.model.page.title
+						, "subTitle" : this.model.page.subtitle
+						, "clientId" : client.id
+						, "authConfirm" : true
+						, "queryStr" : client.query_str
+					}
+				); 
+			}
+		}
+	}
+
+	/**
 	 * isString Function that checks whether an object is a string
 	 * @param  {Object}  obj Object that will be checked to confirm whether it is a string
 	 * @return {Boolean}     Returns true if the object was a string. False otherwise.

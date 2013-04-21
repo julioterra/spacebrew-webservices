@@ -13,7 +13,9 @@ module.exports = {
 				, "auth": "twitter_update"
 			}
 		}
-		, "forwarding_url": "http://localhost:8002/tweet/auth?client_id="
+		, "base_url": "http://localhost:8002"
+		, "forwarding_path": "/tweet/auth?client_id="
+		, "authenticated_path": "/tweet/ready?client_id="
 	}
 
 	/**
@@ -27,8 +29,10 @@ module.exports = {
 	, init: function( config ) {
 	    if (config["session"]) {
 	        this.session = config["session"];
+            this.model.base_url = config["base_url"];
 	        this.handleOAuthRequest = this.oauth.getHandleOAuthRequest( this );
 	        this.handleAppRequest = this.utils.getHandleAppRequest( this );
+	        this.handleAuthenticatedRequest = this.utils.getHandleAuthenticatedRequest( this );
 	        console.log("[init:Twitter] successfully configured twitter status update controller")
 	        return this;
 	    } else {
@@ -85,6 +89,15 @@ module.exports = {
 	 */
 	, handleAppRequest: function(req, res) { 
 		console.log ("[handleAppRequest] placeholder function is being called") 
+	}
+
+	/**
+	 * Points to callback function that handles authenticated requests for the instagram app. 
+	 * 	These requests need to include the client_id that is matched with an ip address to 
+	 * 	confirm authentication.  
+	 */
+	, handleAuthenticatedRequest: function(req, res) { 
+		console.log ("[handleAuthenticatedRequest] placeholder function is being called"); 
 	}
 
     /**

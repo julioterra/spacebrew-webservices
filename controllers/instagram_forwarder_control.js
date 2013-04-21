@@ -12,7 +12,11 @@ module.exports = {
 				, "auth": "instagram_forwarder"
 			}
 		}
-		, "forwarding_url": "http://localhost:8002/instagram/auth?client_id="
+		, "base_url": "http://localhost:8002"
+		, "forwarding_path": "/instagram/auth?client_id="
+		, "authenticated_path": "/instagram/ready?client_id="
+		// , "forwarding_url": "http://localhost:8002/instagram/auth?client_id="
+		// , "authenticated_url": "http://localhost:8002/instagram/ready?client_id="
     }
 
     /**
@@ -26,7 +30,9 @@ module.exports = {
     , init: function( config ) {
         if (config["session"]) {
             this.session = config["session"];
+            this.model.base_url = config["base_url"];
 	        this.handleAppRequest = this.utils.getHandleAppRequest( this );
+	        this.handleAuthenticatedRequest = this.utils.getHandleAuthenticatedRequest( this );
             console.log("[init:foursquareControl] successfully configured fourquare controller")
             return this;            
         } else {
@@ -48,7 +54,7 @@ module.exports = {
 			"id": clientId
 			, "query": ""
 			, "results": {}
-			, "lastId": 0
+			, "lastestId": 0
 			, "reply": undefined
 			, "auth": {
 				"code": ""
@@ -69,12 +75,22 @@ module.exports = {
     }
 
 	/**
-	 * Points to callback function that handles requests for the instagram app. These requests 
+	 * Points to callback function that handles initial requests for the instagram app. These requests 
 	 * 	are parsed to extract the app name from the URL. Look at the utils.js file for more 
 	 * 	details and to see the code for this method. Method is initialized in init function.  
 	 */
 	, handleAppRequest: function(req, res) { 
-		console.log ("[handleAppRequest] placeholder function is being called") 
+		console.log ("[handleAppRequest] placeholder function is being called");
+	}
+
+
+	/**
+	 * Points to callback function that handles authenticated requests for the instagram app. 
+	 * 	These requests need to include the client_id that is matched with an ip address to 
+	 * 	confirm authentication.  
+	 */
+	, handleAuthenticatedRequest: function(req, res) { 
+		console.log ("[handleAuthenticatedRequest] placeholder function is being called"); 
 	}
 
     /**
@@ -103,13 +119,13 @@ module.exports = {
             console.log("[handleOAuthRequest] step 1 - client id ", client.id)
 
 			oauthInputs.setCredential('InstagramSpacebrewForwarder');
-			oauthInputs.set_ForwardingURL(this.model.forwarding_url + client.id)
+			oauthInputs.set_ForwardingURL(controller.model.base_url + controller.model.forwarding_path + client.id)
 
 			var intitializeOAuthCallback = function(results){
 			    	console.log("[intitializeOAuthCallback:handleOAuthRequest] initial OAuth successful ", results.get_AuthorizationURL());
 			    	self.model.clients[client_id].auth.callback_id = results.get_CallbackID();
 			    	self.model.clients[client.id].auth.oath_started = true;
-			    	res.redirect(results.get_AuthorizationURL());		
+					res.redirect(results.get_AuthorizationURL());		
 			    }
 
 			oauthChoreo.execute(
@@ -132,17 +148,7 @@ module.exports = {
 			var finalizeOAuthCallback = function(results){
 		    	console.log("[finalizeOAuthCallback:handleOAuthRequest] finish OAuth successful");
 		    	self.model.clients[client_id].auth.access_token = results.get_AccessToken();
-
-	            client = self.model.clients[client_id];
-				res.render(self.model.page.template.auth,
-					{ 
-						"title" : self.model.page.title
-						, "subTitle" : self.model.page.subtitle
-						, "clientId" : client.id
-						, "authConfirm" : true
-						, "queryStr" : client.query_str
-	                }
-	            )                                            
+		    	res.redirect(controller.model.base_url + controller.model.authenticated_path + client_id);
 		    }
 
 			// Run the choreo, specifying success and error callback handlers
@@ -176,13 +182,14 @@ module.exports = {
 
         // if no client id is provided, or client id is invalid, then send user back to unauthorized page
         if (!queryJson.id || !this.model.clients[queryJson.id]) {
+            console.log("[handleQueryRequest] client with this id does not exist, ", queryJson.id);        
             res.redirect( "/instagram"); 
         } 
 
-        // check if this query differs from the current one, if so then re-initialize the lastId, and query vars
+        // check if this query differs from the current one, if so then re-initialize the lastestId, and query vars
         if ((this.model.clients[queryJson.id].query !== queryJson.data.required.query.text)) {
             console.log("[handleQueryRequest] Query is new");        
-            this.model.clients[queryJson.id].lastId = 0;
+            this.model.clients[queryJson.id].lastestId = 0;
             this.model.clients[queryJson.id].query = queryJson.data.required.query.text;
         }
 
@@ -216,7 +223,7 @@ module.exports = {
         if (!this.utils.isString(query)) return;    // return if search term not valid
 
         // Instantiate and populate the input set for the choreo
-		queryInputs.set_MinID(self.model.clients[clientId].lastId);
+		queryInputs.set_MinID(self.model.clients[clientId].lastestId);
 		queryInputs.set_AccessToken(this.model.clients[clientId].auth.access_token);
 		queryInputs.set_TagName(query);
 
@@ -244,20 +251,40 @@ module.exports = {
 
 				// loop through each check-in to parse and store the data
 				for(var i = tResults.data.length - 1; i >= 0; i--) {
-				    // if this is a new check in then process it
-					result_item = {
-					    // "user": tResults.response["recent"][i].username
-					    // , "photo": tResults.response["recent"][i].user.photo,
-					};
+					if (tResults.data[i].type !== "image") continue;
+
+					console.log( "[successCallback:queryTemboo] tResults.data img: ", tResults.data[i].images.standard_resolution);
 					console.log( "[successCallback:queryTemboo] new check-in created, index number: " + i, result_item);
 
-					// add new checkin to checkIns array
-					results_list.push(result_item);
+					self.model.clients[clientId].id = Number(self.model.clients[clientId].id);
 
-					// update the id of the most recent message
-					if (self.model.clients[clientId].lastId < self.model.clients[clientId].results[i].id) {
-						self.model.clients[clientId].lastId = self.model.clients[clientId].results[i].id;
-						console.log("[successCallback] id of last message received ", self.model.clients[clientId].lastId)
+					// if this is a new instagram entry then process it
+					if (self.model.clients[clientId].lastestId < self.model.clients[clientId].id) {
+
+					    // if this is a new check in then process it
+						result_item = {
+						    "user": tResults.data[i].user.username
+						    , "profile_pic": tResults.data[i].user.profile_picture
+						    , "photo": tResults.data[i].images.standard_resolution.url
+						    , "id" : /^\d*/.exec(tResults.data[i].id) 
+						};
+
+						if (tResults.data[i].caption) {
+							result_item["text"] = tResults.data[i].caption.text
+						}
+
+						if (tResults.data[i].location) {
+							result_item["lat"] = tResults.data[i].location.latitude
+							result_item["long"] = tResults.data[i].location.longitude
+						}
+
+						// add new checkin to checkIns array
+						results_list.push(result_item);
+
+						// update the id of the most recent message
+						self.model.clients[clientId].lastestId = self.model.clients[clientId].id;
+
+						console.log("[successCallback] id of last message received ", self.model.clients[clientId].lastestId)
 					}
                 }
 

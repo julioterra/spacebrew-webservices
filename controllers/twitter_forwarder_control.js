@@ -11,7 +11,9 @@ module.exports = {
 				, "auth": "twitter_forwarder"
 			}
 		}
-		, "forwarding_url": "http://localhost:8002/twitter/auth?client_id="
+		, "base_url": "http://localhost:8002"
+		, "forwarding_path": "/twitter/auth?client_id="
+		, "authenticated_path": "/twitter/ready?client_id="
 	}
 	, utils: require("./utils")
 	, oauth: require("./twitter_oauth")
@@ -27,8 +29,10 @@ module.exports = {
 	, init: function( config ) {
 	    if (config["session"]) {
 	        this.session = config["session"];
+            this.model.base_url = config["base_url"];	        
 	        this.handleOAuthRequest = this.oauth.getHandleOAuthRequest( this );
 	        this.handleAppRequest = this.utils.getHandleAppRequest( this );
+	        this.handleAuthenticatedRequest = this.utils.getHandleAuthenticatedRequest( this );
 			console.log("[init:Twitter] successfully configured twitter forwarder controller")
 		    return this;
 		} else {
@@ -51,7 +55,7 @@ module.exports = {
 			, "query": ""
 			, "request": {}
 			, "results": {}
-			, "lastId": 0
+			, "lastestId": 0
 			, "reply": undefined
 			, "geo": {
 				"lat": 0
@@ -95,6 +99,15 @@ module.exports = {
 		console.log ("[twitter:handleAppRequest] placeholder function is being called") 
 	}
 
+	/**
+	 * Points to callback function that handles authenticated requests for the instagram app. 
+	 * 	These requests need to include the client_id that is matched with an ip address to 
+	 * 	confirm authentication.  
+	 */
+	, handleAuthenticatedRequest: function(req, res) { 
+		console.log ("[handleAuthenticatedRequest] placeholder function is being called"); 
+	}
+
     /**
      * handleQueryRequest 		Callback function that handles ajax requests for tweets. The query string 
      * 							in the URL for each request includes a client id and a twitter query term. 
@@ -130,10 +143,10 @@ module.exports = {
 			}
 		}
 
-        // check if this query differs from the current one, if so then re-initialize the lastId, and query vars
+        // check if this query differs from the current one, if so then re-initialize the lastestId, and query vars
         if ((this.model.clients[queryJson.id].query !== queryJson.data.required.query.text)) {
             console.log("[handleQueryRequest] Query is new");        
-            this.model.clients[queryJson.id].lastId = 0;
+            this.model.clients[queryJson.id].lastestId = 0;
             this.model.clients[queryJson.id].query = queryJson.data.required.query.text;
         }
 
@@ -150,7 +163,7 @@ module.exports = {
                 this.model.clients[queryJson.id].geo.long = queryJson.data.optional.geo.long;
                 this.model.clients[queryJson.id].geo.radius = queryJson.data.optional.geo.radius;
                 this.model.clients[queryJson.id].geo.available = queryJson.data.optional.geo.available;                
-                this.model.clients[queryJson.id].lastId = 0;     // reset last ID to 0
+                this.model.clients[queryJson.id].lastestId = 0;     // reset last ID to 0
             }
         }
 
@@ -194,7 +207,7 @@ module.exports = {
 
 		// configure query with search term and other info
         queryInputs.set_Query(searchT);             // setting the search query    
-        queryInputs.set_SinceId(this.model.clients[clientId].lastId);
+        queryInputs.set_SinceId(this.model.clients[clientId].lastestId);
         queryInputs.set_IncludeEntities(true);      // request add'l metadata
  
         // if geocode available, then process it and add it to query
@@ -229,7 +242,11 @@ module.exports = {
 
                 // loop through results to prepare data to send to front end
                 for(var i = self.model.clients[clientId].results.length - 1; i >= 0; i--) {
-                    if (self.model.clients[clientId].results[i].id > self.model.clients[clientId].lastId) {
+                	// make sure id is a number not a string
+	                self.model.clients[clientId].results[i].id = Number(self.model.clients[clientId].results[i].id);
+
+                    // if this is a new tweet then process it
+                    if (self.model.clients[clientId].results[i].id > self.model.clients[clientId].lastestId) {
 
                         newTweet = {
                             "user": unescape(self.model.clients[clientId].results[i].user.name)
@@ -251,10 +268,10 @@ module.exports = {
                         results_list.push(newTweet);
 
                         // update the id of the most recent message
-                        if (self.model.clients[clientId].lastId < self.model.clients[clientId].results[i].id) {
-	                        self.model.clients[clientId].lastId = self.model.clients[clientId].results[i].id;
-	                        console.log("[successCallback] id of last message received ", self.model.clients[clientId].lastId)                        	
-                        }
+                        // if (self.model.clients[clientId].lastestId < self.model.clients[clientId].results[i].id) {
+						self.model.clients[clientId].lastestId = self.model.clients[clientId].results[i].id;
+						console.log("[successCallback] id of last message received ", self.model.clients[clientId].lastestId)                        	
+                        // }
                     }
                 }
 

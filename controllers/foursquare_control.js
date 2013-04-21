@@ -11,8 +11,9 @@ module.exports = {
 				, "auth": "foursquare"
 			}
 		}
-		, "forwarding_url": "http://localhost:8002/foursquare/auth?client_id="
-		// , "forwarding_url": "http://sandbox.spacebrew.cc:8002/foursquare/auth?client_id="
+		, "base_url": "http://localhost:8002"
+		, "forwarding_path": "/foursquare/auth?client_id="
+		, "authenticated_path": "/foursquare/ready?client_id="
     }
     , utils: require("./utils.js")
 
@@ -27,7 +28,9 @@ module.exports = {
     , init: function( config ) {
         if (config["session"]) {
             this.session = config["session"];
+            this.model.base_url = config["base_url"];
 	        this.handleAppRequest = this.utils.getHandleAppRequest( this );
+	        this.handleAuthenticatedRequest = this.utils.getHandleAuthenticatedRequest( this );
             console.log("[init:foursquareControl] successfully configured fourquare controller")
             return this;            
         } else {
@@ -49,7 +52,7 @@ module.exports = {
 			"id": clientId
 			, "query": ""
 			, "results": {}
-			, "afterTimeStamp": 0
+			, "lastestId": 0
 			, "reply": undefined
 			, "geo": {
 				"lat": 0
@@ -81,6 +84,15 @@ module.exports = {
 		console.log ("[handleAppRequest] placeholder function is being called") 
 	}
 
+	/**
+	 * Points to callback function that handles authenticated requests for the instagram app. 
+	 * 	These requests need to include the client_id that is matched with an ip address to 
+	 * 	confirm authentication.  
+	 */
+	, handleAuthenticatedRequest: function(req, res) { 
+		console.log ("[handleAuthenticatedRequest] placeholder function is being called"); 
+	}
+
     /**
      * handleOAuthRequest 	Method that handles http requests associated to OAuth athentication for the
      * 						Foursquare app. It leverages Temboo's OAuth API, in a consistent manner.
@@ -107,7 +119,7 @@ module.exports = {
 
 			oauthInputs = oauthChoreo.newInputSet();
 			oauthInputs.setCredential('FoursquareSpacebrewForwarder');
-			oauthInputs.set_ForwardingURL(this.model.forwarding_url + client.id)
+			oauthInputs.set_ForwardingURL(this.model.base_url + this.model.forwarding_path + client.id)
 
 			var intitializeOAuthCallback = function(results){
 			    	console.log("[intitializeOAuthCallback:handleOAuthRequest] initial OAuth successful ", results.get_AuthorizeURL());
@@ -136,17 +148,7 @@ module.exports = {
 			var finalizeOAuthCallback = function(results){
 		    	console.log("[finalizeOAuthCallback:handleOAuthRequest] finish OAuth successful");
 		    	self.model.clients[client_id].auth.access_token = results.get_AccessToken();
-
-	            client = self.model.clients[client_id];
-				res.render(self.model.page.template.auth,
-					{ 
-						"title" : self.model.page.title
-						, "subTitle" : self.model.page.subtitle
-						, "clientId" : client.id
-						, "authConfirm" : true
-						, "queryStr" : client.query_str
-	                }
-	            )                                            
+		    	res.redirect(self.model.base_url + self.model.authenticated_path + client_id);
 		    }
 
 			// Run the choreo, specifying success and error callback handlers
@@ -194,7 +196,7 @@ module.exports = {
                 this.model.clients[queryJson.id].geo.lat = queryJson.data.optional.geo.lat;
                 this.model.clients[queryJson.id].geo.long = queryJson.data.optional.geo.long;
                 this.model.clients[queryJson.id].geo.available = queryJson.data.optional.geo.available;                
-                this.model.clients[queryJson.id].afterTimeStamp = 0;     // reset last ID to 0
+                this.model.clients[queryJson.id].lastestId = 0;     // reset last ID to 0
             }
         }
 
@@ -268,8 +270,12 @@ module.exports = {
 
                     // loop through each check-in to parse and store the data
                     for(var i = tResults.response["recent"].length - 1; i >= 0; i--) {
-                        // if this is a new check in then process it
-                        if (self.model.clients[clientId].results[i].createdAt > self.model.clients[clientId].afterTimeStamp) {
+                    	// make sure id is a number not a string
+		                self.model.clients[clientId].results[i].id = Number(self.model.clients[clientId].results[i].id);
+
+                        // if this is a new check-in then process it
+                        if (self.model.clients[clientId].results[i].createdAt > self.model.clients[clientId].lastestId) {
+
                             newCheckIn = {
                                 "user": tResults.response["recent"][i].user.firstName + " " + tResults.response["recent"][i].user.lastName,
                                 "photo": tResults.response["recent"][i].user.photo,
@@ -290,7 +296,7 @@ module.exports = {
                             results_list.push(newCheckIn);
 
                             // update the id of the most recent message
-                            self.model.clients[clientId].afterTimeStamp = self.model.clients[clientId].results[i].createdAt;
+                            self.model.clients[clientId].lastestId = self.model.clients[clientId].results[i].createdAt;
                         }
                     }
                 }

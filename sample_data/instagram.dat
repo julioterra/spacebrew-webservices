@@ -1,4 +1,6 @@
-[ { attribution: null,
+[ 
+{ 
+	attribution: null,
     tags: [ 'test', 'breakfast', 'gre', 'toefl' ],
     type: 'image',
     location: { latitude: 24.712793705, longitude: 46.699903859 },
@@ -24,8 +26,10 @@
        profile_picture: 'http://images.ak.instagram.com/profiles/profile_17314993_75sq_1359051054.jpg',
        full_name: 'Mohammed AlTaweel',
        bio: '',
-       id: '17314993' } },
-  { attribution: null,
+       id: '17314993' } 
+},
+{ 
+	attribution: null,
     tags: 
      [ 'fabbrica',
        'ducati',
@@ -58,7 +62,8 @@
        profile_picture: 'http://images.ak.instagram.com/profiles/profile_26592636_75sq_1340639866.jpg',
        full_name: 'desmoarturo',
        bio: '',
-       id: '26592636' } },
+       id: '26592636' } 
+},
   { attribution: null,
     tags: [ 'test', 'pressure' ],
     type: 'image',

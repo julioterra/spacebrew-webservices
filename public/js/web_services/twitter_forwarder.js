@@ -134,6 +134,7 @@ function sbFunctions () {
 				}
 			}
 		}
+		app.control.toggleState(true);
 		app.control.submit(msg);
 		if (debug) console.log("[onString] submitted query received via spacebrew ", msg);
 	}

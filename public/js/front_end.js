@@ -263,21 +263,36 @@ var Control = {};
 
 				// update the views as appropriate
 	    		for (var i = 0; i < this.views.length; i += 1) {
-				    // if (this.views[i]["updateState"]) this.views[i].updateState(true);	    			
 				    if (this.views[i]["clear"]) this.views[i].clear();	    			
 				    if (this.views[i]["load"]) this.views[i].load();	    			
 	    		}
 				// finally, let's make a query to the appropriate webservice
 			    this._query();
 			}
-		},
+		}
 
-		toggleState: function() {
+		/**
+		 * method that toggles forwarder apps on and off. When the force parameter it provided
+		 * 	then the toggle state if forced to that specific state.
+		 * 	
+		 * @param  {boolean} force  When provided it sets the toggle state, otherwise, the toggle
+		 *                          state will be automatically toggled.
+		 */
+		, toggleState: function( force ) {
 			var self = this; 
 
 			if (this.model.type === "forward") {
+
+				if ( force == true || force == false) {
+					this.forwarding = force;
+				}
+				else {
+					// change the data forwarding state of the app
+					this.forwarding = !this.forwarding;				
+				}
+
 				// handle button press if forwarding is active by turning off forwarding
-				if (this.forwarding) {
+				if (!this.forwarding) {
 					if (this.model.debug) console.log("[Control:toggleState] stop forwarding ");
 
 					// update the state in the appropriate views (such as the web view)
@@ -294,7 +309,7 @@ var Control = {};
 				// handle button press if forwarding is NOT active by turning on forwarding
 				} 
 
-				else {
+				else if (this.forwarding) {
 					if (this.model.debug) console.log("[Control:toggleState] start forwarding - setting refresh interval to: ", this.model.controls.refresh );
 
 					// update the state in the appropriate views (such as the web view)
@@ -309,9 +324,6 @@ var Control = {};
 						self._query();
 					}, this.model.controls.refresh);
 				}					
-
-				// change the data forwarding state of the app
-	    		this.forwarding = !this.forwarding;
 			}
 		}
 	}
@@ -384,7 +396,7 @@ View.Web = function (config) {
 			//add listeners to all the text boxes to trigger "submit" when return or enter are pressed
 			$(".textBox").on("keypress", function(event) {
 				if ($(this).val() != "" && (event.charCode == 13 || event.charCode == 10)) {
-					self.submit();
+					self.submit( true );
 				}
 			});				
 		},
@@ -546,7 +558,8 @@ View.Web = function (config) {
 		},
 
 		/**
-		 * clear 	Method that clears the list of content elements from the browser.
+		 * Method that toggles the button from start to stop forwarding. This is only 
+		 *  called/used on forwarding applications (not update apps).
 		 */
 		updateState: function(_on) {
 			if (_on) $("#query_form .qSubmit").val("stop forwarding");        
@@ -557,11 +570,11 @@ View.Web = function (config) {
 		 * submit 	Method that handle query submissions. It calls the controller's callback 
 		 * 			method that was registered in the registerController method.
 		 */
-		submit: function() {
+		submit: function( no_toggle ) {
 			var msg = {};
 
 			// if this is a forwarding app, then toggle forwarding on and off
-			if (this.model.type === "forward" && this.controller["toggleState"]) {
+			if (this.model.type === "forward" && this.controller["toggleState"] && !no_toggle) {
 				if (this.model.debug) console.log("[View.Web:submit] calling toggle state ");
 				this.controller.toggleState();
 			}
