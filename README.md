@@ -43,6 +43,24 @@ Please note that we have migrate this app to use temboo to handle the OAuth2.0 a
 
 This means that in order to set-up a local version of this app you will need to configure the appropriate credentials in you temboo account. We'll post more information about how to do this soon. In the meantime you should just read temboo's documentation and look at the code in the twitter and foursquare controller files, which are saved in the controllers directory.
 
+###Credential Setup Basics
+
+* log into Temboo
+* Go to the library you intend to create a credential for, e.g. https://temboo.com/library/Library/Twitter/Search/
+* Follow Temboo's instructions to create your auth keys for the library
+	* Example: Twitter
+		* Go to https://apps.twitter.com/app/new
+		* Create app details
+			* Make sure to add a callback URL that matches your app. e.g. if you're running it locally with the default port, your URL should be http://127.0.0.1:8002
+		* Once your app is created, click "API Keys"
+		* Scroll down to "Generate my access token"
+		* Refresh until you have an Access token!
+* Click "Add new" under "CREDENTIALS" on the right
+	* Name your credential what this library expects:
+		* Twitter: TwitterSpacebrewForwarder
+		* Foursquare: FoursquareSpacebrewForwarder
+		* Instagram: InstagramSpacebrewForwarder
+
 ###4. Run App
 Now you are ready to run the app. Go to app's base directory in the terminal, or other shell, and enter the launch command below with the appropriate arguments.
 
