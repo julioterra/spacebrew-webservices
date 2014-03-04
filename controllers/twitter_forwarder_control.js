@@ -201,7 +201,7 @@ module.exports = {
         if (!this.utils.isString(searchT)) return;    // return if search term not valid
 
         // prepare the query by adding authentication elements
-		queryInputs.setCredential("TwitterSpacebrewForwarderConsumerKeySecret");
+		queryInputs.setCredential("TwitterSpacebrewForwarder");
 		queryInputs.set_AccessToken(this.model.clients[clientId].auth.access_token);
 		queryInputs.set_AccessTokenSecret(this.model.clients[clientId].auth.access_token_secret);
 
